@@ -43,6 +43,8 @@ import { PDFDocument } from 'pdf-lib';
 import { computed, ref } from 'vue';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 
+const cMapUrl = import.meta.env.DEV ? 'node_modules/pdfjs-dist/cmaps/' : '/assets/cmaps/';
+
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const pdfFiles = ref<File[]>([]); // 選択されたPDFファイル
@@ -83,7 +85,8 @@ async function renderPdfPageToCanvas(
 // PDFファイルから全ページをCanvasに変換して画像DataURLを取得する
 async function pdfToPageImages(file: File, scale = 1.0): Promise<string[]> {
   const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer, cMapUrl: cMapUrl, cMapPacked: true })
+    .promise;
   const numPages = pdf.numPages;
   const images: string[] = [];
   for (let i = 1; i <= numPages; i++) {
