@@ -39,7 +39,7 @@
     "filesize.js": "2.0.0",
     "jsdom": "^25.0.1",
     "npm-run-all2": "^7.0.2",
-    "oxlint": "^0.15.4",
+    "oxlint": "^0.15.5",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "4.9.155",
     "pica": "9.0.1",
