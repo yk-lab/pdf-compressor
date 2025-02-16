@@ -1,0 +1,6 @@
+{
+  "language": "en",
+  "dictionaries": ["typescript", "node", "markdown"],
+  "words": ["oxlint", "lefthook"],
+  "ignorePaths": ["dist", "node_modules", "build", "coverage", "pnpm-lock.yaml", ".vscode"]
+}

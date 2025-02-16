@@ -1,0 +1,40 @@
+# EXAMPLE USAGE:
+#
+#   Refer for explanation to following link:
+#   https://lefthook.dev/configuration/
+#
+pre-push:
+  jobs:
+    - name: packages audit
+      tags:
+        - frontend
+        - security
+      run: pnpm audit
+
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lint
+      run: pnpm lint
+      stage_fixed: true
+      skip:
+        - merge
+        - rebase
+    - name: cspell
+      glob: '*.{tsx,ts,mts,mcs,mjs,cjs,js,json,md,yml,yaml}'
+      run: pnpm cspell lint --gitignore --cache {staged_files}
+    - name: test
+      run: pnpm test
+    - name: check-branch
+      run: |
+        BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+        if [[ "$BRANCH" = "main" ]]; then
+          echo "You are not allowed to commit to $BRANCH branch"
+          exit 1
+        fi
+
+commit-msg:
+  parallel: true
+  jobs:
+    - name: spell-check
+      run: pnpm cspell --no-summary {1}
