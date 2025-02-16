@@ -117,6 +117,9 @@ importers:
       vitest:
         specifier: ^3.0.5
         version: 3.0.5(@types/node@22.13.2)(jiti@1.21.6)(jsdom@25.0.1)(yaml@2.7.0)
+      vitest-sonar-reporter:
+        specifier: 2.0.0
+        version: 2.0.0(vitest@3.0.5(@types/node@22.13.2)(jiti@1.21.6)(jsdom@25.0.1)(yaml@2.7.0))
       vue-tsc:
         specifier: ^2.2.0
         version: 2.2.0(typescript@5.7.3)
@@ -2765,6 +2768,12 @@ packages:
         optional: true
       yaml:
         optional: true
+
+  vitest-sonar-reporter@2.0.0:
+    resolution: {integrity: sha512-LorC3NnmrBrryx4+l3BEsNQjD0Y7wfmrD1y/+tHDuZUuVj7w8nOxRXCBSppDfmgfpToOhwchh0JcL4IGMKUKDA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    peerDependencies:
+      vitest: '>=1'
 
   vitest@3.0.5:
     resolution: {integrity: sha512-4dof+HvqONw9bvsYxtkfUp2uHsTN9bV2CZIi1pWgoFpL1Lld8LA1ka9q/ONSsoScAKG7NVGf2stJTI7XRkXb2Q==}
@@ -5550,6 +5559,10 @@ snapshots:
       fsevents: 2.3.3
       jiti: 1.21.6
       yaml: 2.7.0
+
+  vitest-sonar-reporter@2.0.0(vitest@3.0.5(@types/node@22.13.2)(jiti@1.21.6)(jsdom@25.0.1)(yaml@2.7.0)):
+    dependencies:
+      vitest: 3.0.5(@types/node@22.13.2)(jiti@1.21.6)(jsdom@25.0.1)(yaml@2.7.0)
 
   vitest@3.0.5(@types/node@22.13.2)(jiti@1.21.6)(jsdom@25.0.1)(yaml@2.7.0):
     dependencies:
