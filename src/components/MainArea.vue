@@ -62,7 +62,9 @@ async function handlePdfFiles(files: File[]) {
   // 画像を品質調整しながら1つのPDFにまとめる
   const compressedPdfBytes = await createCompressedPdfFromImages(
     await renderPdfToCanvases(await mergePdfFiles(files)),
-    fileSizeLimit.value,
+    {
+      maxSizeBytes: fileSizeLimit.value,
+    },
   );
   fileSize.value = compressedPdfBytes.byteLength;
 

@@ -55,7 +55,11 @@ async function renderPdfPageToCanvas(
   */
 export async function renderPdfToCanvases(
   pdf: PDFDocumentProxy,
-  scale = 1.0,
+  {
+    scale = 1.0,
+  }: {
+    scale?: number;
+  } = {},
 ): Promise<HTMLCanvasElement[]> {
   const canvases = [];
   for (let i = 0; i < pdf.numPages; i++) {
@@ -94,10 +98,11 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
  */
 export async function createCompressedPdfFromImages(
   pages: HTMLCanvasElement[],
-  maxSizeBytes = 1_000_000,
   {
+    maxSizeBytes = 1_000_000,
     cutQuality = 0.1,
   }: {
+    maxSizeBytes?: number;
     cutQuality?: number;
   } = {},
 ): Promise<Uint8Array> {
@@ -106,10 +111,7 @@ export async function createCompressedPdfFromImages(
   while (quality >= cutQuality) {
     const pdfDoc = await PDFDocument.create();
     for (const canvas of pages) {
-      const imgUrl = canvas.toDataURL('image/jpeg', quality);
-      const imageBytes = await (await fetch(imgUrl)).arrayBuffer();
-      const jpgImage = await pdfDoc.embedJpg(new Uint8Array(imageBytes));
-
+      const jpgImage = await pdfDoc.embedJpg(canvas.toDataURL('image/jpeg', quality));
       const page = pdfDoc.addPage([jpgImage.width, jpgImage.height]);
       page.drawImage(jpgImage, { x: 0, y: 0, width: jpgImage.width, height: jpgImage.height });
     }
