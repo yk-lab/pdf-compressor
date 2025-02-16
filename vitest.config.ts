@@ -16,6 +16,7 @@ export default mergeConfig(
       ],
       coverage: {
         reporter: ['text', 'html', 'clover', 'lcov', 'json'],
+        include: ['src/**'],
       },
       outputFile: {
         junit: './coverage/junit.xml',
