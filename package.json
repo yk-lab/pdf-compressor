@@ -47,7 +47,7 @@
     "npm-run-all2": "^7.0.2",
     "oxlint": "^0.15.6",
     "pdf-lib": "1.17.1",
-    "pdfjs-dist": "4.9.155",
+    "pdfjs-dist": "4.10.38",
     "pica": "9.0.1",
     "postcss": "8.5.2",
     "prettier": "^3.3.3",

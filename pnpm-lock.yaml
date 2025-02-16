@@ -85,8 +85,8 @@ importers:
         specifier: 1.17.1
         version: 1.17.1
       pdfjs-dist:
-        specifier: 4.9.155
-        version: 4.9.155
+        specifier: 4.10.38
+        version: 4.10.38
       pica:
         specifier: 9.0.1
         version: 9.0.1
@@ -2293,8 +2293,8 @@ packages:
   pdf-lib@1.17.1:
     resolution: {integrity: sha512-V/mpyJAoTsN4cnP31vc0wfNA1+p20evqqnap0KLoRUN0Yk/p3wN52DOEsL4oBFcLdb76hlpKPtzJIgo67j/XLw==}
 
-  pdfjs-dist@4.9.155:
-    resolution: {integrity: sha512-epRZn6DQQKCOEqbmFsxkiMBm1MHaNrnr6T4VBNP0bsDvdJdmrWcZbS5cgJXW68P0d3uJTlFhF6Wms2tlSgPYig==}
+  pdfjs-dist@4.10.38:
+    resolution: {integrity: sha512-/Y3fcFrXEAsMjJXeL9J8+ZG9U01LbuWaYypvDW2ycW1jL269L3js3DVBjDJ0Up9Np1uqDXsDrRihHANhZOlwdQ==}
     engines: {node: '>=20'}
 
   perfect-debounce@1.0.0:
@@ -5090,7 +5090,7 @@ snapshots:
       pako: 1.0.11
       tslib: 1.14.1
 
-  pdfjs-dist@4.9.155:
+  pdfjs-dist@4.10.38:
     optionalDependencies:
       '@napi-rs/canvas': 0.1.65
 
