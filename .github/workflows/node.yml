@@ -27,6 +27,27 @@ jobs:
       - run: pnpm lint
       - run: pnpm run build --if-present
       - run: pnpm test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+      - name: Upload coverage to Code Climate
+        uses: paambaati/codeclimate-action@v9.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageLocations: ./coverage/clover.xml:clover
+      - uses: qltysh/qlty-action/coverage@main
+        with:
+          coverage-token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
+          files: coverage/clover.xml
       - name: Send webpack stats to RelativeCI
         uses: relative-ci/agent-action@v2
         with:
