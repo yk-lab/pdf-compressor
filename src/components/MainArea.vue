@@ -110,8 +110,8 @@ async function createCompressedPdfFromImages(
     const pdfDoc = await PDFDocument.create();
     for (const imgUrl of imageDataUrls) {
       // qualityを反映するため、一度Canvasなどで再エンコードする
-      const reencodedUrl = await reencodeImage(imgUrl, 'image/jpeg', quality);
-      const imageBytes = await (await fetch(reencodedUrl)).arrayBuffer();
+      const reEncodedUrl = await reEncodeImage(imgUrl, 'image/jpeg', quality);
+      const imageBytes = await (await fetch(reEncodedUrl)).arrayBuffer();
       const jpgImage = await pdfDoc.embedJpg(new Uint8Array(imageBytes));
 
       const page = pdfDoc.addPage([jpgImage.width, jpgImage.height]);
@@ -136,8 +136,14 @@ async function createCompressedPdfFromImages(
   return pdfBytes;
 }
 
-// 画像を再エンコードするためのヘルパー関数
-async function reencodeImage(dataUrl: string, mimeType: string, quality: number): Promise<string> {
+/**
+ * 画像を再エンコードするためのヘルパー関数
+ * @param dataUrl - 元の画像のデータURL
+ * @param mimeType - 出力する画像のMIMEタイプ
+ * @param quality - 圧縮品質（0.0 ~ 1.0）
+ * @returns 再エンコードされた画像のデータURL
+ */
+async function reEncodeImage(dataUrl: string, mimeType: string, quality: number): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.onload = () => {
