@@ -27,3 +27,9 @@ jobs:
       - run: pnpm lint
       - run: pnpm run build --if-present
       - run: pnpm test
+      - name: Send webpack stats to RelativeCI
+        uses: relative-ci/agent-action@v2
+        with:
+          webpackStatsFile: ./dist/webpack-stats.json
+          key: ${{ secrets.RELATIVE_CI_KEY }}
+          token: ${{ secrets.GITHUB_TOKEN }}
