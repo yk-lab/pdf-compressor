@@ -17,7 +17,8 @@
     "sonarqube",
     "sonarsource",
     "Vetur",
-    "vitest"
+    "vitest",
+    "vueuse"
   ],
   "ignorePaths": ["dist", "node_modules", "build", "coverage", "pnpm-lock.yaml", ".vscode"]
 }
