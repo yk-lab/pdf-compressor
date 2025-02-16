@@ -24,8 +24,10 @@ jobs:
           node-version-file: 'package.json'
           cache: 'pnpm'
       - run: pnpm install
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
       - run: pnpm lint
-      - run: pnpm run build --if-present
+      - run: pnpm run build
       - run: pnpm test
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
@@ -37,6 +39,7 @@ jobs:
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/junit.xml
           fail_ci_if_error: true
       - name: Upload coverage to Code Climate
         uses: paambaati/codeclimate-action@v9.0.0
@@ -47,7 +50,7 @@ jobs:
       - uses: qltysh/qlty-action/coverage@main
         with:
           coverage-token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
-          files: coverage/clover.xml
+          files: coverage/lcov.info
       - name: Send webpack stats to RelativeCI
         uses: relative-ci/agent-action@v2
         with:

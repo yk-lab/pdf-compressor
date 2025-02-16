@@ -18,7 +18,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Spell check
-        uses: codespell-project/actions-codespell@master
-        with:
-          check_filenames: true
-          skip: ./.git,pnpm-lock.yaml
+        uses: streetsidesoftware/cspell-action@v6
