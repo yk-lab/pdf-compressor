@@ -11,7 +11,8 @@ export default mergeConfig(
       root: fileURLToPath(new URL('./', import.meta.url)),
       reporters: [
         'default',
-        'junit'
+        'junit',
+        ['vitest-sonar-reporter', { outputFile: './coverage/sonar-report.xml' }],
       ],
       coverage: {
         reporter: ['text', 'html', 'clover', 'lcov', 'json'],

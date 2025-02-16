@@ -11,11 +11,15 @@
     "paambaati",
     "qlty",
     "qltysh",
+    "Qube",
     "re-use",
     "reencode",
     "reencoded",
     "shfmt",
-    "Vetur"
+    "sonarqube",
+    "sonarsource",
+    "Vetur",
+    "vitest"
   ],
   "ignorePaths": ["dist", "node_modules", "build", "coverage", "pnpm-lock.yaml", ".vscode"]
 }
