@@ -42,7 +42,7 @@
     "eslint-plugin-playwright": "^2.1.0",
     "eslint-plugin-vue": "^9.30.0",
     "filesize.js": "2.0.0",
-    "jsdom": "^25.0.1",
+    "jsdom": "^26.0.0",
     "lefthook": "1.10.10",
     "npm-run-all2": "^7.0.2",
     "oxlint": "^0.15.6",
