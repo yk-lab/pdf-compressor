@@ -64,8 +64,8 @@ importers:
         specifier: ^0.15.11
         version: 0.15.11
       eslint-plugin-playwright:
-        specifier: ^2.1.0
-        version: 2.1.0(eslint@9.17.0(jiti@1.21.6))
+        specifier: ^2.2.0
+        version: 2.2.0(eslint@9.17.0(jiti@1.21.6))
       eslint-plugin-vue:
         specifier: ^9.30.0
         version: 9.32.0(eslint@9.17.0(jiti@1.21.6))
@@ -1752,8 +1752,8 @@ packages:
   eslint-plugin-oxlint@0.15.11:
     resolution: {integrity: sha512-sQMNroPApNS85ZPyO5fWjnLVlA6aPuKk7lzP/TpKMVfpFpX/V2FzYtZm/A7RQd0N9ufcP5aKj1rL25OskhvV2g==}
 
-  eslint-plugin-playwright@2.1.0:
-    resolution: {integrity: sha512-wMbHOehofSB1cBdzz2CLaCYaKNLeTQ0YnOW+7AHa281TJqlpEJUBgTHbRUYOUxiXphfWwOyTPvgr6vvEmArbSA==}
+  eslint-plugin-playwright@2.2.0:
+    resolution: {integrity: sha512-qSQpAw7RcSzE3zPp8FMGkthaCWovHZ/BsXtpmnGax9vQLIovlh1bsZHEa2+j2lv9DWhnyeLM/qZmp7ffQZfQvg==}
     engines: {node: '>=16.6.0'}
     peerDependencies:
       eslint: '>=8.40.0'
@@ -2960,8 +2960,8 @@ packages:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
     engines: {node: '>=10'}
 
-  type-fest@4.34.1:
-    resolution: {integrity: sha512-6kSc32kT0rbwxD6QL1CYe8IqdzN/J/ILMrNK+HMQCKH3insCDRY/3ITb0vcBss0a3t72fzh2YSzj8ko1HgwT3g==}
+  type-fest@4.35.0:
+    resolution: {integrity: sha512-2/AwEFQDFEy30iOLjrvHDIH7e4HEWH+f1Yl1bI5XMqzuoCUqwYCdxachgsgv0og/JdVZUhbfjcJAoHj5L1753A==}
     engines: {node: '>=16'}
 
   typescript-eslint@8.19.0:
@@ -4951,7 +4951,7 @@ snapshots:
     dependencies:
       jsonc-parser: 3.3.1
 
-  eslint-plugin-playwright@2.1.0(eslint@9.17.0(jiti@1.21.6)):
+  eslint-plugin-playwright@2.2.0(eslint@9.17.0(jiti@1.21.6)):
     dependencies:
       eslint: 9.17.0(jiti@1.21.6)
       globals: 13.24.0
@@ -5603,7 +5603,7 @@ snapshots:
       path-to-regexp: 6.3.0
       picocolors: 1.1.1
       strict-event-emitter: 0.5.1
-      type-fest: 4.34.1
+      type-fest: 4.35.0
       yargs: 17.7.2
     optionalDependencies:
       typescript: 5.7.3
@@ -6142,7 +6142,7 @@ snapshots:
   type-fest@0.21.3:
     optional: true
 
-  type-fest@4.34.1:
+  type-fest@4.35.0:
     optional: true
 
   typescript-eslint@8.19.0(eslint@9.17.0(jiti@1.21.6))(typescript@5.7.3):
