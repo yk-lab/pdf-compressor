@@ -1,18 +1,28 @@
 <template>
   <div>
-    <label class="block">
-      <span class="sr-only">ファイルを選択</span>
-      <input
-        type="file"
-        class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-cyan-50 file:text-cyan-700 hover:file:bg-cyan-100"
-        multiple
-        @change="handleFiles"
-        accept=".pdf"
-      />
+    <label
+      ref="dropZoneRef"
+      class="block border-dashed border-2 border-gray-400 px-4 py-8 rounded cursor-pointer"
+      :class="{ 'border-cyan-600': isOverDropZone }"
+    >
+      <input type="file" class="hidden" multiple @change="handleFiles" accept=".pdf" />
+      <div class="text-cyan-600">
+        <Upload class="size-8 mx-auto" aria-hidden="true" />
+      </div>
+      <div class="text-gray-600 text-center mt-4">
+        PDFファイルをここに
+        <em class="px-2 text-gray-900 bg-cyan-50">ドラッグ＆ドロップ</em>
+        または
+        <em class="px-2 text-gray-900 bg-cyan-50">クリック</em>
+        して<template v-if="pdfFiles.length > 0">追加</template
+        ><template v-else>選択</template>してください。
+      </div>
     </label>
 
+    <FileList class="mt-4" v-model="pdfFiles" />
+
     <button
-      class="block w-full text-sm text-white bg-cyan-600 hover:bg-cyan-500 py-2 px-4 rounded font-semibold mt-4 disabled:opacity-50"
+      class="block w-full text-sm text-white bg-cyan-600 hover:bg-cyan-500 py-2 px-4 rounded font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
       @click="mergeAndCompressPDF"
       :disabled="pdfFiles.length === 0"
     >
@@ -38,24 +48,61 @@
 <script setup lang="ts">
 import * as pdfjsLib from 'pdfjs-dist';
 import filesize from 'filesize.js';
-import { computed, ref } from 'vue';
+import { Upload } from 'lucide-vue-next';
+import { computed, ref, watch, onUnmounted } from 'vue';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { getGeneratedPDFOutputFileName } from '@/utils/file';
 import { mergePdfFiles, renderPdfToCanvases, createCompressedPdfFromImages } from '@/utils/pdf';
+import FileList from './FileList.vue';
+import { useDropZone } from '@vueuse/core';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
-const pdfFiles = ref<File[]>([]); // 選択されたPDFファイル
+const dropZoneRef = ref<HTMLDivElement>();
+const pdfFiles = ref<{ id: string; file: File }[]>([]); // 選択されたPDFファイル
 const compressedPDF = ref<string | null>(null); // 圧縮後のPDF Blob URL
 const fileSize = ref(0); // 圧縮後のファイルサイズ
 const fileSizeLimit = ref(1_000_000); // 圧縮後のファイルサイズの上限 (1MB)
 const downloadFileName = ref('compressed.pdf'); // ダウンロード時のファイル名
 
+const resetCompressedPDF = () => {
+  if (compressedPDF.value) {
+    URL.revokeObjectURL(compressedPDF.value);
+  }
+  compressedPDF.value = null;
+  fileSize.value = 0;
+};
+
+const addFiles = (files: File[]) => {
+  const filteredFiles = files.filter((file) => file.type === 'application/pdf');
+  pdfFiles.value.push(...filteredFiles.map((file) => ({ id: crypto.randomUUID(), file })));
+  resetCompressedPDF();
+};
+
 const handleFiles = async (event: Event) => {
   if (!(event.target instanceof HTMLInputElement)) throw new TypeError();
-  pdfFiles.value = Array.from(event.target.files ?? []);
-  compressedPDF.value = null;
+  const files = event.target.files;
+  if (files) {
+    addFiles(Array.from(files));
+  }
+  event.target.value = '';
 };
+
+const onDrop = (files: File[] | null) => {
+  if (files) {
+    addFiles(files);
+  }
+};
+
+const { isOverDropZone } = useDropZone(dropZoneRef, {
+  onDrop,
+  // specify the types of data to be received.
+  dataTypes: ['application/pdf'],
+  // control multi-file drop
+  multiple: true,
+  // whether to prevent default behavior for unhandled events
+  preventDefaultForUnhandled: false,
+});
 
 // メイン処理例
 async function handlePdfFiles(files: File[]) {
@@ -77,8 +124,16 @@ async function handlePdfFiles(files: File[]) {
 }
 
 const mergeAndCompressPDF = () => {
-  handlePdfFiles(pdfFiles.value);
+  handlePdfFiles(pdfFiles.value.map((f) => f.file));
 };
 
 const filesizeDisplay = computed(() => filesize(fileSize.value));
+
+watch(pdfFiles, () => {
+  resetCompressedPDF();
+});
+
+onUnmounted(() => {
+  resetCompressedPDF();
+});
 </script>
