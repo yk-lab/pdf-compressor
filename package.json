@@ -55,7 +55,7 @@
     "rollup-plugin-webpack-stats": "2.0.2",
     "tailwindcss": "3.4.17",
     "typescript": "~5.7.3",
-    "vite": "^6.0.11",
+    "vite": "^6.1.1",
     "vite-plugin-static-copy": "2.2.0",
     "vite-plugin-vue-devtools": "^7.6.5",
     "vitest": "^3.0.5",
