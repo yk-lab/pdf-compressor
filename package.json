@@ -46,7 +46,7 @@
     "jsdom": "^26.0.0",
     "lefthook": "1.10.10",
     "npm-run-all2": "^7.0.2",
-    "oxlint": "^0.15.6",
+    "oxlint": "^0.15.11",
     "pdf-lib": "1.17.1",
     "pdfjs-dist": "4.10.38",
     "pica": "9.0.1",
