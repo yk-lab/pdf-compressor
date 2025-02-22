@@ -28,7 +28,7 @@
 import { useSortable } from '@vueuse/integrations/useSortable';
 import { Delete } from 'lucide-vue-next';
 import { GripVertical } from 'lucide-vue-next';
-import pdfIcon from '../assets/icons/pdf.svg?url';
+import pdfIcon from '@/assets/icons/pdf.svg?url';
 import { useTemplateRef, computed } from 'vue';
 
 const el = useTemplateRef<HTMLElement>('el');

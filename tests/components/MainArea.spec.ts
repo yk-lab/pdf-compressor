@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { mount } from '@vue/test-utils';
-import MainArea from '../MainArea.vue';
+import MainArea from '@/components/MainArea.vue';
 
 describe('MainArea', () => {
   it('renders properly', () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { mount } from '@vue/test-utils';
-import FileList from '../FileList.vue';
+import FileList from '@/components/FileList.vue';
 
 describe('FileList', () => {
   it('renders properly', () => {
