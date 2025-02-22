@@ -29,7 +29,7 @@ import { useSortable } from '@vueuse/integrations/useSortable';
 import { Delete } from 'lucide-vue-next';
 import { GripVertical } from 'lucide-vue-next';
 import pdfIcon from '../assets/icons/pdf.svg?url';
-import { useTemplateRef } from 'vue';
+import { useTemplateRef, computed } from 'vue';
 
 const el = useTemplateRef<HTMLElement>('el');
 const files = defineModel<{ id: string; file: File }[]>({
@@ -42,14 +42,14 @@ useSortable(el, files, {
   ghostClass: 'ghost',
 });
 
-const filesize = (size: number) => {
+const filesize = computed(() => (size: number) => {
   return new Intl.NumberFormat('en-US', {
     style: 'unit',
     unit: 'megabyte',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(size / 1024 / 1024);
-};
+});
 
 const removeFile = (id: string) => {
   files.value = files.value.filter((f) => f.id !== id);

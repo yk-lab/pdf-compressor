@@ -18,7 +18,10 @@ describe('FileList', () => {
     const wrapper = mount(FileList, {
       props: {
         modelValue: [
-          { id: '4da4d224-22b4-beae-349a-4b0df9a8e949', file: new File(['0'.repeat(10000)], 'file1.txt') },
+          {
+            id: '4da4d224-22b4-beae-349a-4b0df9a8e949',
+            file: new File(['0'.repeat(10000)], 'file1.txt'),
+          },
           { id: '4da4d224-22b4-beae-349a-4b0df9a8e950', file: new File([''], 'file2.txt') },
         ],
       },
@@ -33,7 +36,10 @@ describe('FileList', () => {
     const wrapper = mount(FileList, {
       props: {
         modelValue: [
-          { id: '4da4d224-22b4-beae-349a-4b0df9a8e949', file: new File(['0'.repeat(10000)], 'file1.txt') },
+          {
+            id: '4da4d224-22b4-beae-349a-4b0df9a8e949',
+            file: new File(['0'.repeat(10000)], 'file1.txt'),
+          },
           { id: '4da4d224-22b4-beae-349a-4b0df9a8e950', file: new File([''], 'file2.txt') },
         ],
       },
@@ -41,7 +47,16 @@ describe('FileList', () => {
 
     await wrapper.find('.text-red-500').trigger('click');
 
+    // update:modelValueイベントが発火されたことを確認
+    expect(wrapper.emitted('update:modelValue')).toBeTruthy();
+    // イベントが1回だけ発火されたことを確認
+    expect(wrapper.emitted('update:modelValue')).toHaveLength(1);
+    // 発火されたイベントの値が正しいことを確認
+    expect(wrapper.emitted('update:modelValue')).toMatchObject([
+      [[{ id: '4da4d224-22b4-beae-349a-4b0df9a8e950', file: new File([''], 'file2.txt') }]],
+    ]);
 
+    // ファイルが削除されていることを確認
     expect(wrapper.text()).not.toContain('file1.txt (0.01 MB)');
   });
 });

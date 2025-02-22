@@ -4,8 +4,20 @@
       ref="dropZoneRef"
       class="block border-dashed border-2 border-gray-400 px-4 py-8 rounded cursor-pointer"
       :class="{ 'border-cyan-600': isOverDropZone }"
+      role="button"
+      tabindex="0"
+      aria-label="PDFファイルをアップロード"
+      @keypress.enter="$refs.fileInput.click()"
     >
-      <input type="file" class="hidden" multiple @change="handleFiles" accept=".pdf" />
+      <input
+        ref="fileInput"
+        type="file"
+        class="hidden"
+        multiple
+        @change="handleFiles"
+        accept=".pdf"
+        aria-hidden="true"
+      />
       <div class="text-cyan-600">
         <Upload class="size-8 mx-auto" aria-hidden="true" />
       </div>
@@ -73,8 +85,17 @@ const resetCompressedPDF = () => {
   fileSize.value = 0;
 };
 
-const addFiles = (files: File[]) => {
+const addFiles = (files: File[]): void => {
+  if (!files.length) {
+    return;
+  }
+
   const filteredFiles = files.filter((file) => file.type === 'application/pdf');
+  if (!filteredFiles.length) {
+    console.warn('PDFファイルが含まれていません');
+    return;
+  }
+
   pdfFiles.value.push(...filteredFiles.map((file) => ({ id: crypto.randomUUID(), file })));
   resetCompressedPDF();
 };
