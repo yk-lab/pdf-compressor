@@ -3,6 +3,7 @@
   "dictionaries": ["typescript", "node", "markdown"],
   "words": [
     "cmaps",
+    "esbuild",
     "lefthook",
     "luizm",
     "njsproj",
@@ -17,6 +18,8 @@
     "sonarqube",
     "sonarsource",
     "Vetur",
+    "vite",
+    "vitejs",
     "vitest",
     "vueuse"
   ],

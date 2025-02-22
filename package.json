@@ -74,8 +74,12 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "esbuild",
       "lefthook",
       "msw"
-    ]
+    ],
+    "overrides": {
+      "esbuild": "^0.25.0"
+    }
   }
 }
