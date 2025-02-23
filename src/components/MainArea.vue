@@ -68,7 +68,7 @@ import { useDropZone } from '@vueuse/core';
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
 const inputFileId = useId();
-const dropZoneRef = ref<HTMLDivElement>();
+const dropZoneRef = ref<HTMLLabelElement>();
 const pdfFiles = ref<{ id: string; file: File }[]>([]); // 選択されたPDFファイル
 const compressedPDF = ref<string | null>(null); // 圧縮後のPDF Blob URL
 const fileSize = ref(0); // 圧縮後のファイルサイズ
@@ -83,8 +83,8 @@ const resetCompressedPDF = () => {
   fileSize.value = 0;
 };
 
-const addFiles = (files: File[]): void => {
-  if (!files.length) {
+const addFiles = (files: File[] | null): void => {
+  if (!files || !files.length) {
     return;
   }
 
@@ -107,14 +107,8 @@ const handleFiles = async (event: Event) => {
   event.target.value = '';
 };
 
-const onDrop = (files: File[] | null) => {
-  if (files) {
-    addFiles(files);
-  }
-};
-
 const { isOverDropZone } = useDropZone(dropZoneRef, {
-  onDrop,
+  onDrop: addFiles,
   // specify the types of data to be received.
   dataTypes: ['application/pdf'],
   // control multi-file drop

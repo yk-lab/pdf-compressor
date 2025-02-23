@@ -45,7 +45,7 @@ describe('FileList', () => {
       },
     });
 
-    await wrapper.find('.text-red-500').trigger('click');
+    await wrapper.find('[data-testid="remove-file"]').trigger('click');
 
     // update:modelValueイベントが発火されたことを確認
     expect(wrapper.emitted('update:modelValue')).toBeTruthy();

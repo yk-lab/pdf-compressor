@@ -18,7 +18,12 @@
           {{ file.name }}
           <span class="text-sm">({{ filesize(file.size) }})</span>
         </div>
-        <button @click="removeFile(id)" class="text-red-500 ml-4" aria-label="Remove file">
+        <button
+          @click="removeFile(id)"
+          class="text-red-500 ml-4"
+          data-testid="remove-file"
+          aria-label="Remove file"
+        >
           <Delete class="size-6" />
           <span class="sr-only">削除</span>
         </button>
