@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { mount } from '@vue/test-utils';
-import HowToArea from '../HowToArea.vue';
+import HowToArea from '@/components/HowToArea.vue';
 
 describe('HowToArea', () => {
   it('renders properly', () => {

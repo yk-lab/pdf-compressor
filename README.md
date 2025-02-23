@@ -6,8 +6,6 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/869e894e25db706ca9a5/test_coverage)](https://codeclimate.com/github/yk-lab/pdf-compressor/test_coverage)
 [![Maintainability](https://qlty.sh/badges/be1a615b-a505-4219-91f1-2fe87fe1a5b7/maintainability.svg)](https://qlty.sh/gh/yk-lab/projects/pdf-compressor)
 
-This template should help get you started developing with Vue 3 in Vite.
-
 ## Recommended IDE Setup
 
 [VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).

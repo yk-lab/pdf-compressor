@@ -3,6 +3,7 @@
   "dictionaries": ["typescript", "node", "markdown"],
   "words": [
     "cmaps",
+    "esbuild",
     "lefthook",
     "luizm",
     "njsproj",
@@ -17,8 +18,10 @@
     "sonarqube",
     "sonarsource",
     "Vetur",
+    "vite",
+    "vitejs",
     "vitest",
     "vueuse"
   ],
-  "ignorePaths": ["dist", "node_modules", "build", "coverage", "pnpm-lock.yaml", ".vscode"]
+  "ignorePaths": ["dist", "node_modules", "build", "coverage", "pnpm-lock.yaml", ".vscode", ".qlty"]
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
 import { mount } from '@vue/test-utils';
-import NotesArea from '../NotesArea.vue';
+import NotesArea from '@/components/NotesArea.vue';
 
 describe('NotesArea', () => {
   it('renders properly', () => {
