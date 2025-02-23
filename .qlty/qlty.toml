@@ -43,7 +43,7 @@ exclude_patterns = [
 
 test_patterns = [
   "**/test/**",
-  "**/tests/**",
+  "**/__test__/**",
   "**/spec/**",
   "**/*.test.*",
   "**/*.spec.*",

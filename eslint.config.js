@@ -21,7 +21,7 @@ export default [
 
   {
     ...pluginVitest.configs.recommended,
-    files: ['tests/**'],
+    files: ['**/__test__/**'],
   },
 
   {
