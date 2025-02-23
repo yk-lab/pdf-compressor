@@ -1,22 +1,19 @@
 <template>
   <div>
     <label
+      :for="inputFileId"
       ref="dropZoneRef"
       class="block border-dashed border-2 border-gray-400 px-4 py-8 rounded cursor-pointer"
       :class="{ 'border-cyan-600': isOverDropZone }"
-      role="button"
-      tabindex="0"
       aria-label="PDFファイルをアップロード"
-      @keypress.enter="$refs.fileInput.click()"
     >
       <input
-        ref="fileInput"
         type="file"
+        :id="inputFileId"
         class="hidden"
         multiple
         @change="handleFiles"
         accept=".pdf"
-        aria-hidden="true"
       />
       <div class="text-cyan-600">
         <Upload class="size-8 mx-auto" aria-hidden="true" />
@@ -61,7 +58,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
 import filesize from 'filesize.js';
 import { Upload } from 'lucide-vue-next';
-import { computed, ref, watch, onUnmounted } from 'vue';
+import { useId, computed, ref, watch, onUnmounted } from 'vue';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { getGeneratedPDFOutputFileName } from '@/utils/file';
 import { mergePdfFiles, renderPdfToCanvases, createCompressedPdfFromImages } from '@/utils/pdf';
@@ -70,6 +67,7 @@ import { useDropZone } from '@vueuse/core';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
+const inputFileId = useId();
 const dropZoneRef = ref<HTMLDivElement>();
 const pdfFiles = ref<{ id: string; file: File }[]>([]); // 選択されたPDFファイル
 const compressedPDF = ref<string | null>(null); // 圧縮後のPDF Blob URL

@@ -7,14 +7,20 @@
         class="flex space-x-4 border rounded-md p-2 items-center justify-between select-none"
       >
         <div class="flex items-center space-x-4">
-          <GripVertical class="handle cursor-ns-resize" role="img" aria-label="Drag file" />
-          <img v-if="file.type === 'application/pdf'" :src="pdfIcon" class="size-8" />
+          <GripVertical class="handle cursor-ns-resize" aria-label="Drag to reorder" />
+          <img
+            v-if="file.type === 'application/pdf'"
+            :src="pdfIcon"
+            class="size-8"
+            alt="PDFアイコン"
+            aria-hidden="true"
+          />
           {{ file.name }}
           <span class="text-sm">({{ filesize(file.size) }})</span>
         </div>
         <button @click="removeFile(id)" class="text-red-500 ml-4" aria-label="Remove file">
-          <Delete class="size-6" role="img" />
-          <span class="sr-only"> Remove</span>
+          <Delete class="size-6" />
+          <span class="sr-only">削除</span>
         </button>
       </li>
     </ol>
@@ -26,8 +32,7 @@
 
 <script lang="ts" setup>
 import { useSortable } from '@vueuse/integrations/useSortable';
-import { Delete } from 'lucide-vue-next';
-import { GripVertical } from 'lucide-vue-next';
+import { Delete, GripVertical } from 'lucide-vue-next';
 import pdfIcon from '@/assets/icons/pdf.svg?url';
 import { useTemplateRef, computed } from 'vue';
 
