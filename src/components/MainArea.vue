@@ -149,4 +149,9 @@ watch(pdfFiles, () => {
 onUnmounted(() => {
   resetCompressedPDF();
 });
+
+defineExpose({
+  pdfFiles,
+  addFiles,
+});
 </script>

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 import { mount } from '@vue/test-utils';
 import MainArea from '@/components/MainArea.vue';
@@ -11,19 +11,23 @@ describe('MainArea', () => {
 });
 
 describe('MainArea.vue - addFiles', () => {
+  const mockUUID = 'test-uuid';
+
   beforeEach(() => {
     global.URL.revokeObjectURL = vi.fn();
 
     // Mock crypto.randomUUID
     // @ts-expect-error: Mocking randomUUID
-    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => 'test-uuid');
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => mockUUID);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('should handle empty files array', async () => {
     const wrapper = mount(MainArea);
-    // @ts-expect-error: accessing private method
     await wrapper.vm.addFiles([]);
-    // @ts-expect-error: accessing private ref
     expect(wrapper.vm.pdfFiles).toHaveLength(0);
   });
 
@@ -35,10 +39,8 @@ describe('MainArea.vue - addFiles', () => {
       new File([''], 'test2.pdf', { type: 'application/pdf' }),
     ];
 
-    // @ts-expect-error: accessing private method
-    await wrapper.vm.addFiles(files);
+    wrapper.vm.addFiles(files);
 
-    // @ts-expect-error: accessing private ref
     const pdfFiles = wrapper.vm.pdfFiles;
     expect(pdfFiles).toHaveLength(2);
     expect(pdfFiles[0]).toEqual({
@@ -66,8 +68,7 @@ describe('MainArea.vue - addFiles', () => {
 
     const files = [new File([''], 'test.pdf', { type: 'application/pdf' })];
 
-    // @ts-expect-error: accessing private method
-    await wrapper.vm.addFiles(files);
+    wrapper.vm.addFiles(files);
 
     // @ts-expect-error: accessing private refs
     expect(wrapper.vm.compressedPDF).toBeNull();
