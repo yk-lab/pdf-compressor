@@ -46,7 +46,7 @@
     "eslint-plugin-vue": "^9.32.0",
     "filesize.js": "2.0.0",
     "jsdom": "^26.0.0",
-    "lefthook": "1.10.11",
+    "lefthook": "1.11.4",
     "lucide-vue-next": "0.475.0",
     "npm-run-all2": "^7.0.2",
     "oxlint": "^0.16.0",
