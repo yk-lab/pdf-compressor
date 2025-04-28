@@ -39,7 +39,7 @@
     "@vueuse/core": "12.7.0",
     "@vueuse/integrations": "12.7.0",
     "autoprefixer": "10.4.20",
-    "cspell": "8.17.4",
+    "cspell": "8.19.3",
     "eslint": "^9.21.0",
     "eslint-plugin-oxlint": "^0.15.11",
     "eslint-plugin-playwright": "^2.2.0",
