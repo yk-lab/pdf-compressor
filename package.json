@@ -41,7 +41,7 @@
     "autoprefixer": "10.4.20",
     "cspell": "8.17.4",
     "eslint": "^9.21.0",
-    "eslint-plugin-oxlint": "^0.15.11",
+    "eslint-plugin-oxlint": "^0.16.9",
     "eslint-plugin-playwright": "^2.2.0",
     "eslint-plugin-vue": "^9.32.0",
     "filesize.js": "2.0.0",
