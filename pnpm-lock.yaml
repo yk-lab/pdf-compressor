@@ -70,8 +70,8 @@ importers:
         specifier: ^9.21.0
         version: 9.21.0(jiti@1.21.7)
       eslint-plugin-oxlint:
-        specifier: ^0.15.11
-        version: 0.15.11
+        specifier: ^1.5.0
+        version: 1.5.0
       eslint-plugin-playwright:
         specifier: ^2.2.0
         version: 2.2.0(eslint@9.21.0(jiti@1.21.7))
@@ -761,8 +761,8 @@ packages:
     resolution: {integrity: sha512-xeO57FpIu4p1Ri3Jq/EXq4ClRm86dVF2z/+kvFnyqVYRavTZmaFaUBbWCOuuTh0o/g7DSsk6kc2vrS4Vl5oPOQ==}
     engines: {node: '>=18.18'}
 
-  '@inquirer/confirm@5.1.12':
-    resolution: {integrity: sha512-dpq+ielV9/bqgXRUbNH//KsY6WEw9DrGPmipkpmgC1Y46cwuBTNx7PXFWTjc3MQ+urcc0QxoVHcMI0FW4Ok0hg==}
+  '@inquirer/confirm@5.1.13':
+    resolution: {integrity: sha512-EkCtvp67ICIVVzjsquUiVSd+V5HRGOGQfsqA4E4vMWhYnB7InUL0pa0TIWt1i+OfP16Gkds8CdIu6yGZwOM1Yw==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -770,8 +770,8 @@ packages:
       '@types/node':
         optional: true
 
-  '@inquirer/core@10.1.13':
-    resolution: {integrity: sha512-1viSxebkYN2nJULlzCxES6G9/stgHSepZ9LqqfdIGPHj5OHhiBUXVS0a6R0bEC2A+VL4D9w6QB66ebCr6HGllA==}
+  '@inquirer/core@10.1.14':
+    resolution: {integrity: sha512-Ma+ZpOJPewtIYl6HZHZckeX1STvDnHTCB2GVINNUlSEn2Am6LddWwfPkIGY0IUFVjUUrr/93XlBwTK6mfLjf0A==}
     engines: {node: '>=18'}
     peerDependencies:
       '@types/node': '>=18'
@@ -1115,8 +1115,8 @@ packages:
   '@types/sortablejs@1.15.8':
     resolution: {integrity: sha512-b79830lW+RZfwaztgs1aVPgbasJ8e7AXtZYHTELNXZPsERt4ymJdjV4OccDbHQAvHrCcFpbF78jkm0R6h/pZVg==}
 
-  '@types/statuses@2.0.5':
-    resolution: {integrity: sha512-jmIUGWrAiwu3dZpxntxieC+1n/5c3mjrImkmOSQ2NC5uP6cYO4aAZDdSmRcI5C1oiTmqlZGHC+/NmJrKogbP5A==}
+  '@types/statuses@2.0.6':
+    resolution: {integrity: sha512-xMAgYwceFhRA2zY+XbEA7mxYbA093wdiW8Vu6gZPGWy9cmOyU9XesH1tNcEWsKFd5Vzrqx5T3D38PWx1FIIXkA==}
 
   '@types/tough-cookie@4.0.5':
     resolution: {integrity: sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==}
@@ -1770,8 +1770,8 @@ packages:
     peerDependencies:
       eslint: '>=7.0.0'
 
-  eslint-plugin-oxlint@0.15.11:
-    resolution: {integrity: sha512-sQMNroPApNS85ZPyO5fWjnLVlA6aPuKk7lzP/TpKMVfpFpX/V2FzYtZm/A7RQd0N9ufcP5aKj1rL25OskhvV2g==}
+  eslint-plugin-oxlint@1.5.0:
+    resolution: {integrity: sha512-+Um4akCxGOSJ8ozILC7GEU6xbKB1P8nYhLTfsvLiLot6Tt0VtM3oR/PH7SzHYgKb0HNpD5+8bXcaD5KErlIkIg==}
 
   eslint-plugin-playwright@2.2.0:
     resolution: {integrity: sha512-qSQpAw7RcSzE3zPp8FMGkthaCWovHZ/BsXtpmnGax9vQLIovlh1bsZHEa2+j2lv9DWhnyeLM/qZmp7ffQZfQvg==}
@@ -2817,8 +2817,8 @@ packages:
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
-  statuses@2.0.1:
-    resolution: {integrity: sha512-RwNA9Z/7PrK06rYLIzFMlaF+l73iwpzsqRIFgbMLbTcLD6cOao82TaWefPXQvB2fOC4AjuYSEndS7N/mTCbkdQ==}
+  statuses@2.0.2:
+    resolution: {integrity: sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw==}
     engines: {node: '>= 0.8'}
 
   std-env@3.8.0:
@@ -3500,7 +3500,7 @@ snapshots:
 
   '@bundled-es-modules/statuses@1.0.1':
     dependencies:
-      statuses: 2.0.1
+      statuses: 2.0.2
     optional: true
 
   '@bundled-es-modules/tough-cookie@0.1.6':
@@ -3870,15 +3870,15 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.2': {}
 
-  '@inquirer/confirm@5.1.12(@types/node@22.13.5)':
+  '@inquirer/confirm@5.1.13(@types/node@22.13.5)':
     dependencies:
-      '@inquirer/core': 10.1.13(@types/node@22.13.5)
+      '@inquirer/core': 10.1.14(@types/node@22.13.5)
       '@inquirer/type': 3.0.7(@types/node@22.13.5)
     optionalDependencies:
       '@types/node': 22.13.5
     optional: true
 
-  '@inquirer/core@10.1.13(@types/node@22.13.5)':
+  '@inquirer/core@10.1.14(@types/node@22.13.5)':
     dependencies:
       '@inquirer/figures': 1.0.12
       '@inquirer/type': 3.0.7(@types/node@22.13.5)
@@ -4148,7 +4148,7 @@ snapshots:
 
   '@types/sortablejs@1.15.8': {}
 
-  '@types/statuses@2.0.5':
+  '@types/statuses@2.0.6':
     optional: true
 
   '@types/tough-cookie@4.0.5': {}
@@ -4915,7 +4915,7 @@ snapshots:
     dependencies:
       eslint: 9.21.0(jiti@1.21.7)
 
-  eslint-plugin-oxlint@0.15.11:
+  eslint-plugin-oxlint@1.5.0:
     dependencies:
       jsonc-parser: 3.3.1
 
@@ -5555,12 +5555,12 @@ snapshots:
       '@bundled-es-modules/cookie': 2.0.1
       '@bundled-es-modules/statuses': 1.0.1
       '@bundled-es-modules/tough-cookie': 0.1.6
-      '@inquirer/confirm': 5.1.12(@types/node@22.13.5)
+      '@inquirer/confirm': 5.1.13(@types/node@22.13.5)
       '@mswjs/interceptors': 0.37.6
       '@open-draft/deferred-promise': 2.2.0
       '@open-draft/until': 2.1.0
       '@types/cookie': 0.6.0
-      '@types/statuses': 2.0.5
+      '@types/statuses': 2.0.6
       graphql: 16.11.0
       headers-polyfill: 4.0.3
       is-node-process: 1.2.0
@@ -5933,7 +5933,7 @@ snapshots:
 
   stackback@0.0.2: {}
 
-  statuses@2.0.1:
+  statuses@2.0.2:
     optional: true
 
   std-env@3.8.0: {}
