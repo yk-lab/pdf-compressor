@@ -2,9 +2,8 @@
 
 [![RelativeCI](https://badges.relative-ci.com/badges/Wr6DyS3Q5rsIfqaI4SUv?branch=main&style=flat)](https://app.relative-ci.com/projects/Wr6DyS3Q5rsIfqaI4SUv)
 [![codecov](https://codecov.io/gh/yk-lab/pdf-compressor/graph/badge.svg?token=XAMNwF4ZsW)](https://codecov.io/gh/yk-lab/pdf-compressor)
-[![Maintainability](https://api.codeclimate.com/v1/badges/869e894e25db706ca9a5/maintainability)](https://codeclimate.com/github/yk-lab/pdf-compressor/maintainability)
-[![Test Coverage](https://api.codeclimate.com/v1/badges/869e894e25db706ca9a5/test_coverage)](https://codeclimate.com/github/yk-lab/pdf-compressor/test_coverage)
 [![Maintainability](https://qlty.sh/badges/be1a615b-a505-4219-91f1-2fe87fe1a5b7/maintainability.svg)](https://qlty.sh/gh/yk-lab/projects/pdf-compressor)
+[![Code Coverage](https://qlty.sh/gh/yk-lab/projects/pdf-compressor/coverage.svg)](https://qlty.sh/gh/yk-lab/projects/pdf-compressor)
 
 ## Recommended IDE Setup
 
