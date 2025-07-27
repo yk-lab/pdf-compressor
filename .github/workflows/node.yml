@@ -56,15 +56,9 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./coverage/junit.xml
           fail_ci_if_error: true
-      - name: Upload coverage to Code Climate
-        uses: paambaati/codeclimate-action@v9.0.0
-        env:
-          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
-        with:
-          coverageLocations: ./coverage/clover.xml:clover
       - uses: qltysh/qlty-action/coverage@main
         with:
-          coverage-token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
+          token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
           files: coverage/lcov.info
       - name: SonarQube Scan
         uses: sonarsource/sonarqube-scan-action@master
