@@ -5,11 +5,12 @@
     <FileList class="mt-4" v-model="pdfFiles" />
 
     <button
-      class="block w-full text-sm text-white bg-cyan-600 hover:bg-cyan-500 py-2 px-4 rounded font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+      class="w-full text-sm text-white bg-cyan-600 hover:bg-cyan-500 py-2 px-4 rounded font-semibold mt-4 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
       @click="mergeAndCompressPDF"
-      :disabled="pdfFiles.length === 0"
+      :disabled="pdfFiles.length === 0 || isProcessing"
     >
-      PDFを結合・ファイルサイズ縮小
+      <Loader2 v-if="isProcessing" class="animate-spin size-4" />
+      {{ isProcessing ? '処理中...' : 'PDFを結合・ファイルサイズ縮小' }}
     </button>
 
     <DownloadSection :download-url="compressedPDF" :file-name="downloadFileName" :size="fileSize" />
@@ -18,6 +19,7 @@
 
 <script setup lang="ts">
 import * as pdfjsLib from 'pdfjs-dist';
+import { Loader2 } from 'lucide-vue-next';
 import { ref, watch, onUnmounted } from 'vue';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { getGeneratedPDFOutputFileName } from '@/utils/file';
@@ -33,6 +35,7 @@ const compressedPDF = ref<string | null>(null); // 圧縮後のPDF Blob URL
 const fileSize = ref(0); // 圧縮後のファイルサイズ
 const fileSizeLimit = ref(1_000_000); // 圧縮後のファイルサイズの上限 (1MB)
 const downloadFileName = ref('compressed.pdf'); // ダウンロード時のファイル名
+const isProcessing = ref(false); // 処理中フラグ
 
 const resetCompressedPDF = () => {
   if (compressedPDF.value) {
@@ -67,11 +70,14 @@ async function handleFiles(files: File[]) {
 }
 
 const mergeAndCompressPDF = async () => {
+  isProcessing.value = true;
   try {
     await handleFiles(pdfFiles.value.map((f) => f.file));
-  } catch (err) {
-    // TODO: UI通知（トースト/アラート等）に置き換え
-    console.error(err);
+  } catch (error) {
+    console.error(error);
+    alert('PDF処理中にエラーが発生しました。もう一度お試しください。');
+  } finally {
+    isProcessing.value = false;
   }
 };
 
