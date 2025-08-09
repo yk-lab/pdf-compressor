@@ -31,18 +31,20 @@ describe('MainArea.vue - addFiles', () => {
     expect(wrapper.vm.pdfFiles).toHaveLength(0);
   });
 
-  it('should add only PDF files to pdfFiles', async () => {
+  it('should add PDF and image files to pdfFiles', async () => {
     const wrapper = mount(MainArea);
     const files = [
       new File([''], 'test.pdf', { type: 'application/pdf' }),
       new File([''], 'test.txt', { type: 'text/plain' }),
       new File([''], 'test2.pdf', { type: 'application/pdf' }),
+      new File([''], 'test.jpg', { type: 'image/jpeg' }),
+      new File([''], 'test.png', { type: 'image/png' }),
     ];
 
     wrapper.vm.addFiles(files);
 
     const pdfFiles = wrapper.vm.pdfFiles;
-    expect(pdfFiles).toHaveLength(2);
+    expect(pdfFiles).toHaveLength(4);
     expect(pdfFiles[0]).toEqual({
       id: 'test-uuid',
       file: expect.objectContaining({
@@ -55,6 +57,20 @@ describe('MainArea.vue - addFiles', () => {
       file: expect.objectContaining({
         name: 'test2.pdf',
         type: 'application/pdf',
+      }),
+    });
+    expect(pdfFiles[2]).toEqual({
+      id: 'test-uuid',
+      file: expect.objectContaining({
+        name: 'test.jpg',
+        type: 'image/jpeg',
+      }),
+    });
+    expect(pdfFiles[3]).toEqual({
+      id: 'test-uuid',
+      file: expect.objectContaining({
+        name: 'test.png',
+        type: 'image/png',
       }),
     });
   });

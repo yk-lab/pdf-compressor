@@ -13,13 +13,13 @@
         class="hidden"
         multiple
         @change="handleFiles"
-        accept=".pdf"
+        accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
       />
       <div class="text-cyan-600">
         <Upload class="size-8 mx-auto" aria-hidden="true" />
       </div>
       <div class="text-gray-600 text-center mt-4">
-        PDFファイルをここに
+        PDFまたは画像ファイルをここに
         <em class="px-2 text-gray-900 bg-cyan-50">ドラッグ＆ドロップ</em>
         または
         <em class="px-2 text-gray-900 bg-cyan-50">クリック</em>
@@ -83,14 +83,22 @@ const resetCompressedPDF = () => {
   fileSize.value = 0;
 };
 
+const ALLOWED_FILE_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif'
+];
+
 const addFiles = (files: File[] | null): void => {
   if (!files || !files.length) {
     return;
   }
 
-  const filteredFiles = files.filter((file) => file.type === 'application/pdf');
+  const filteredFiles = files.filter((file) => ALLOWED_FILE_TYPES.includes(file.type));
   if (!filteredFiles.length) {
-    console.warn('PDFファイルが含まれていません');
+    console.warn('PDFまたは画像ファイルが含まれていません');
     return;
   }
 
@@ -110,7 +118,7 @@ const handleFiles = async (event: Event) => {
 const { isOverDropZone } = useDropZone(dropZoneRef, {
   onDrop: addFiles,
   // specify the types of data to be received.
-  dataTypes: ['application/pdf'],
+  dataTypes: ALLOWED_FILE_TYPES,
   // control multi-file drop
   multiple: true,
   // whether to prevent default behavior for unhandled events

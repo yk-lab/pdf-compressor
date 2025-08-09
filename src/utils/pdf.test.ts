@@ -67,4 +67,53 @@ describe.todo('PDF Utilities', () => {
     const compressedPdf = await createCompressedPdfFromImages(canvases);
     expect(compressedPdf.byteLength).toBeLessThanOrEqual(1_000_000);
   });
+
+  it('should merge PDF and image files together', async () => {
+    // Create a test PDF file
+    const pdfDoc = await PDFDocument.create();
+    await createPage(pdfDoc);
+    const pdfData = await pdfDoc.save();
+    const pdfFile = new File([pdfData], 'test.pdf', { type: 'application/pdf' });
+    pdfFile.arrayBuffer = vi.fn().mockResolvedValue(await generateArrayBuffer(pdfData));
+
+    // Create a test image file (mock canvas toDataURL)
+    const mockImageData = 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=';
+    const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
+    
+    // Mock Image and Canvas APIs for image file
+    global.Image = vi.fn().mockImplementation(() => ({
+      onload: null,
+      onerror: null,
+      src: '',
+      width: 100,
+      height: 100,
+      addEventListener: vi.fn((event, handler) => {
+        if (event === 'load' && handler) {
+          setTimeout(() => handler(), 0);
+        }
+      }),
+    }));
+    
+    global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test');
+    global.URL.revokeObjectURL = vi.fn();
+
+    const mockCanvas = {
+      getContext: vi.fn().mockReturnValue({
+        drawImage: vi.fn(),
+      }),
+      toDataURL: vi.fn().mockReturnValue(mockImageData),
+      width: 100,
+      height: 100,
+    };
+    
+    vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      if (tag === 'canvas') {
+        return mockCanvas as unknown as HTMLCanvasElement;
+      }
+      return document.createElement(tag);
+    });
+
+    const mergedPdf = await mergePdfFiles([pdfFile, imageFile]);
+    expect(mergedPdf.numPages).toBe(2); // 1 page from PDF + 1 page from image
+  });
 });

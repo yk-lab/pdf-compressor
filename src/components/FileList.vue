@@ -15,6 +15,11 @@
             alt="PDFアイコン"
             aria-hidden="true"
           />
+          <Image
+            v-else-if="file.type.startsWith('image/')"
+            class="size-8 text-gray-600"
+            aria-hidden="true"
+          />
           {{ file.name }}
           <span class="text-sm">({{ filesize(file.size) }})</span>
         </div>
@@ -37,7 +42,7 @@
 
 <script lang="ts" setup>
 import { useSortable } from '@vueuse/integrations/useSortable';
-import { Delete, GripVertical } from 'lucide-vue-next';
+import { Delete, GripVertical, Image } from 'lucide-vue-next';
 import pdfIcon from '@/assets/icons/pdf.svg?url';
 import { useTemplateRef, computed } from 'vue';
 
