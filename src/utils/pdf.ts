@@ -23,9 +23,8 @@ const isPdf = (file: File): boolean => {
   * @param file File
   * @return 画像かどうか
   */
-const isImage = (file: File): boolean => {
-  return file.type.startsWith('image/');
-}
+const supportedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const isImage = (file: File): boolean => supportedImageTypes.has(file.type);
 
 /* PDFファイルをCanvasに描画する関数
   * @param pdf PDFDocumentProxy

@@ -40,7 +40,7 @@ describe('MainArea.vue - addFiles', () => {
       new File([''], 'test.png', { type: 'image/png' }),
     ];
 
-    wrapper.vm.addFiles(files);
+    await wrapper.vm.addFiles(files);
 
     const pdfFiles = wrapper.vm.pdfFiles;
     expect(pdfFiles).toHaveLength(4);
@@ -83,7 +83,7 @@ describe('MainArea.vue - addFiles', () => {
 
     const files = [new File([''], 'test.pdf', { type: 'application/pdf' })];
 
-    wrapper.vm.addFiles(files);
+    await wrapper.vm.addFiles(files);
 
     // @ts-expect-error: accessing private refs
     expect(wrapper.vm.compressedPDF).toBeNull();

@@ -15,7 +15,7 @@
             alt="PDFアイコン"
             aria-hidden="true"
           />
-          <Image
+          <ImageIcon
             v-else-if="file.type.startsWith('image/')"
             class="size-8 text-gray-600"
             aria-hidden="true"
@@ -42,7 +42,7 @@
 
 <script lang="ts" setup>
 import { useSortable } from '@vueuse/integrations/useSortable';
-import { Delete, GripVertical, Image } from 'lucide-vue-next';
+import { Delete, GripVertical, Image as ImageIcon } from 'lucide-vue-next';
 import pdfIcon from '@/assets/icons/pdf.svg?url';
 import { useTemplateRef, computed } from 'vue';
 

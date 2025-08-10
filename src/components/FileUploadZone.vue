@@ -4,7 +4,7 @@
     ref="dropZoneRef"
     class="block border-dashed border-2 border-gray-400 px-4 py-8 rounded cursor-pointer"
     :class="{ 'border-cyan-600': isOverDropZone }"
-    aria-label="PDFファイルをアップロード"
+    aria-label="PDFまたは画像ファイルをアップロード"
   >
     <input
       type="file"
@@ -81,6 +81,6 @@ const { isOverDropZone } = useDropZone(dropZoneRef, {
   },
   dataTypes: ALLOWED_FILE_TYPES,
   multiple: true,
-  preventDefaultForUnhandled: false,
+  preventDefaultForUnhandled: true,
 });
 </script>

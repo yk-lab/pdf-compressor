@@ -28,7 +28,7 @@ import DownloadSection from './DownloadSection.vue';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
-const pdfFiles = ref<{ id: string; file: File }[]>([]); // 選択されたPDFファイル
+const pdfFiles = ref<{ id: string; file: File }[]>([]); // 選択されたファイル（PDF/画像）
 const compressedPDF = ref<string | null>(null); // 圧縮後のPDF Blob URL
 const fileSize = ref(0); // 圧縮後のファイルサイズ
 const fileSizeLimit = ref(1_000_000); // 圧縮後のファイルサイズの上限 (1MB)
@@ -47,8 +47,8 @@ const addFiles = (files: File[]): void => {
   resetCompressedPDF();
 };
 
-// メイン処理例
-async function handlePdfFiles(files: File[]) {
+// メイン処理
+async function handleFiles(files: File[]) {
   // 画像を品質調整しながら1つのPDFにまとめる
   const compressedPdfBytes = await createCompressedPdfFromImages(
     await renderPdfToCanvases(await mergePdfFiles(files)),
@@ -67,12 +67,16 @@ async function handlePdfFiles(files: File[]) {
 }
 
 const mergeAndCompressPDF = () => {
-  handlePdfFiles(pdfFiles.value.map((f) => f.file));
+  handleFiles(pdfFiles.value.map((f) => f.file));
 };
 
-watch(pdfFiles, () => {
-  resetCompressedPDF();
-});
+watch(
+  pdfFiles,
+  () => {
+    resetCompressedPDF();
+  },
+  { deep: true },
+);
 
 onUnmounted(() => {
   resetCompressedPDF();
