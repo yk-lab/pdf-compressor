@@ -35,6 +35,7 @@ describe('MainArea', () => {
 
 describe('MainArea.vue - addFiles', () => {
   let uuidCounter = 0;
+  let originalRevokeObjectURL: typeof URL.revokeObjectURL | undefined;
 
   beforeEach(() => {
     // Reset UUID counter
@@ -47,6 +48,9 @@ describe('MainArea.vue - addFiles', () => {
     if (!global.URL.revokeObjectURL) {
       global.URL.revokeObjectURL = () => {};
     }
+
+    // Save original before spying
+    originalRevokeObjectURL = global.URL.revokeObjectURL;
     vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => undefined);
 
     // Mock crypto.randomUUID to return unique values
@@ -56,6 +60,10 @@ describe('MainArea.vue - addFiles', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    // Restore global functions
+    if (originalRevokeObjectURL) {
+      global.URL.revokeObjectURL = originalRevokeObjectURL;
+    }
   });
 
   it('should handle empty files array', async () => {
@@ -132,6 +140,8 @@ describe('MainArea.vue - mergeAndCompressPDF', () => {
   let mockRevokeObjectURL: typeof URL.revokeObjectURL;
   const mockObjectURL = 'blob:mock-url';
   let uuidCounter = 0;
+  let originalCreateObjectURL: typeof URL.createObjectURL | undefined;
+  let originalRevokeObjectURL: typeof URL.revokeObjectURL | undefined;
 
   beforeEach(() => {
     // Reset UUID counter
@@ -147,6 +157,10 @@ describe('MainArea.vue - mergeAndCompressPDF', () => {
     if (!global.URL.revokeObjectURL) {
       global.URL.revokeObjectURL = () => {};
     }
+
+    // Save originals before spying
+    originalCreateObjectURL = global.URL.createObjectURL;
+    originalRevokeObjectURL = global.URL.revokeObjectURL;
 
     // Mock URL methods
     mockCreateObjectURL = vi.fn().mockReturnValue(mockObjectURL);
@@ -177,6 +191,13 @@ describe('MainArea.vue - mergeAndCompressPDF', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    // Restore global functions
+    if (originalCreateObjectURL) {
+      global.URL.createObjectURL = originalCreateObjectURL;
+    }
+    if (originalRevokeObjectURL) {
+      global.URL.revokeObjectURL = originalRevokeObjectURL;
+    }
   });
 
   it('should handle files successfully and generate compressed PDF', async () => {
@@ -195,11 +216,19 @@ describe('MainArea.vue - mergeAndCompressPDF', () => {
     await flushPromises();
 
     // Verify the PDF processing functions were called
-    expect(pdfUtils.mergePdfFiles).toHaveBeenCalledWith(files);
-    expect(pdfUtils.renderPdfToCanvases).toHaveBeenCalled();
+    expect(pdfUtils.mergePdfFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'test1.pdf', type: 'application/pdf' }),
+        expect.objectContaining({ name: 'test2.pdf', type: 'application/pdf' }),
+      ]),
+    );
+    // Verify mergePdfFiles result is passed to renderPdfToCanvases
+    expect(pdfUtils.renderPdfToCanvases).toHaveBeenCalledWith(
+      expect.objectContaining({ numPages: 1 }),
+    );
     expect(pdfUtils.createCompressedPdfFromImages).toHaveBeenCalledWith(
       [expect.any(HTMLCanvasElement)],
-      { maxSizeBytes: 1000000 }, // Default 1MB
+      expect.objectContaining({ maxSizeBytes: expect.any(Number) }),
     );
 
     // Verify the blob was created

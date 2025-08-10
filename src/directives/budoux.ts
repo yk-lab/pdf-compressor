@@ -57,4 +57,4 @@ export default {
   async updated(el: HTMLElement) {
     await applyBudoux(el);
   },
-} satisfies ObjectDirective<HTMLElement>;
+} satisfies ObjectDirective<HTMLElement, Promise<void>>;

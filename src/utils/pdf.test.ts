@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-function-type */
+
 import { describe, it, expect, vi } from 'vitest';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -60,16 +60,16 @@ const createMockImage = (
   withEventListeners = false,
 ) => {
   if (withEventListeners) {
-    const listeners: Record<string, Function[]> = {};
+    const listeners: Record<string, Array<(e: Event) => void>> = {};
     let _src = '';
     let _onload: ((event: Event) => void) | null = null;
+    let _onerror: ((event: Event) => void) | null = null;
 
     global.Image = vi.fn().mockImplementation(() => {
       const img: any = {
         width,
         height,
-        onerror: null,
-        addEventListener: (event: string, handler: any) => {
+        addEventListener: (event: string, handler: (e: Event) => void) => {
           if (!listeners[event]) {
             listeners[event] = [];
           }
@@ -84,15 +84,30 @@ const createMockImage = (
         },
       });
 
+      Object.defineProperty(img, 'onerror', {
+        get: () => _onerror,
+        set: (handler: ((event: Event) => void) | null) => {
+          _onerror = handler;
+        },
+      });
+
       Object.defineProperty(img, 'src', {
         get: () => _src,
         set: (value: string) => {
           _src = value;
           setTimeout(() => {
-            const event = new Event('load');
-            if (_onload) _onload(event);
-            if (listeners['load']) {
-              listeners['load'].forEach((fn) => fn(event));
+            if (shouldError) {
+              const event = new Event('error');
+              if (_onerror) _onerror(event);
+              if (listeners['error']) {
+                listeners['error'].forEach((fn) => fn(event));
+              }
+            } else {
+              const event = new Event('load');
+              if (_onload) _onload(event);
+              if (listeners['load']) {
+                listeners['load'].forEach((fn) => fn(event));
+              }
             }
           }, 0);
         },

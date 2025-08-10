@@ -62,6 +62,7 @@ describe('budoux directive', () => {
   });
 
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     global.CSS = originalCSS;
   });

@@ -55,7 +55,7 @@ describe('FileUploadZone', () => {
     // Mock FileList
     setInputFiles(input, [pdfFile, jpegFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     expect(wrapper.emitted('add-files')).toBeTruthy();
@@ -70,7 +70,7 @@ describe('FileUploadZone', () => {
 
     setInputFiles(input, [txtFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     expect(wrapper.emitted('add-files')).toBeFalsy();
@@ -93,7 +93,7 @@ describe('FileUploadZone', () => {
 
     setInputFiles(input, [largeFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     expect(wrapper.emitted('add-files')).toBeFalsy();
@@ -111,7 +111,7 @@ describe('FileUploadZone', () => {
 
     setInputFiles(input, [jpegFile, pngFile, webpFile, gifFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     expect(wrapper.emitted('add-files')).toBeTruthy();
@@ -126,7 +126,7 @@ describe('FileUploadZone', () => {
 
     setInputFiles(input, [pdfFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     // Just verify that the file was processed
@@ -141,7 +141,7 @@ describe('FileUploadZone', () => {
 
     setInputFiles(input, [txtFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     // Error message should be shown
@@ -184,7 +184,7 @@ describe('FileUploadZone', () => {
     const txtFile = new File(['text'], 'test.txt', { type: 'text/plain' });
     setInputFiles(input, [txtFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     expect(wrapper.text()).toContain('サポートされていないファイル形式');
@@ -193,7 +193,7 @@ describe('FileUploadZone', () => {
     const pdfFile = new File(['pdf'], 'test.pdf', { type: 'application/pdf' });
     setInputFiles(input, [pdfFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     expect(wrapper.text()).not.toContain('サポートされていないファイル形式');
@@ -210,7 +210,7 @@ describe('FileUploadZone', () => {
 
     setInputFiles(input, [pdfFile, txtFile, jpegFile]);
 
-    await input.dispatchEvent(new Event('change'));
+    input.dispatchEvent(new Event('change'));
     await nextTick();
 
     // Should emit only valid files
