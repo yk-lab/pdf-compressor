@@ -10,13 +10,13 @@ import {
 } from './pdf';
 import { PDFDocument, StandardFonts, rgb, PDFPage } from 'pdf-lib';
 
-// Export helper functions for testing
-export const isPdf = (file: File): boolean => {
+// Helper functions for testing
+const isPdf = (file: File): boolean => {
   return file.type === 'application/pdf';
 };
 
 const supportedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-export const isImage = (file: File): boolean => supportedImageTypes.has(file.type);
+const isImage = (file: File): boolean => supportedImageTypes.has(file.type);
 
 const createPage = async (pdfDoc: PDFDocument): Promise<PDFPage> => {
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
@@ -40,8 +40,8 @@ const generateArrayBuffer = async (data: Uint8Array) => {
   return arrayBuffer;
 };
 
-// Export loadImageToCanvas for testing
-export async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
+// loadImageToCanvas for testing
+async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);

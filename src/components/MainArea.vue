@@ -66,8 +66,13 @@ async function handleFiles(files: File[]) {
   downloadFileName.value = getGeneratedPDFOutputFileName();
 }
 
-const mergeAndCompressPDF = () => {
-  handleFiles(pdfFiles.value.map((f) => f.file));
+const mergeAndCompressPDF = async () => {
+  try {
+    await handleFiles(pdfFiles.value.map((f) => f.file));
+  } catch (err) {
+    // TODO: UI通知（トースト/アラート等）に置き換え
+    console.error(err);
+  }
 };
 
 watch(

@@ -104,16 +104,17 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 const processFiles = (files: File[] | null) => {
   if (!files || files.length === 0) return;
 
-  // ファイルサイズチェック
+  // ファイルサイズチェック（サイズ超過はエラー表示のみで続行）
   const oversizedFiles = files.filter((file) => file.size > MAX_FILE_SIZE);
   if (oversizedFiles.length > 0) {
     const oversizedNames = oversizedFiles.map((f) => f.name).join(', ');
     showError(`ファイルサイズが大きすぎます (最大100MB): ${oversizedNames}`);
-    return;
   }
 
-  const validFiles = files.filter((file) => ALLOWED_FILE_TYPES.includes(file.type));
-  const invalidFiles = files.filter((file) => !ALLOWED_FILE_TYPES.includes(file.type));
+  // サイズ制限内のファイルのみを処理
+  const withinSize = files.filter((file) => file.size <= MAX_FILE_SIZE);
+  const validFiles = withinSize.filter((file) => ALLOWED_FILE_TYPES.includes(file.type));
+  const invalidFiles = withinSize.filter((file) => !ALLOWED_FILE_TYPES.includes(file.type));
 
   if (validFiles.length > 0) {
     emit('add-files', validFiles);

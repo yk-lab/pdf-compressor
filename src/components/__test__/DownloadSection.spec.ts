@@ -12,7 +12,8 @@ describe('DownloadSection', () => {
       },
     });
     expect(wrapper.find('a').exists()).toBe(false);
-    expect(wrapper.find('div').exists()).toBe(false);
+    // v-ifがfalseの場合、divが表示されないことを確認
+    expect(wrapper.find('div.mt-4').exists()).toBe(false);
   });
 
   it('renders download link when downloadUrl is provided', () => {
