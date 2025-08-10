@@ -43,46 +43,102 @@ const cleanupImageMocks = (setup: MockImageSetup) => {
   global.URL.revokeObjectURL = setup.originalRevokeObjectURL;
 };
 
-const createMockImage = (width = 200, height = 150, shouldError = false) => {
-  let onloadCallback: (() => void) | null = null;
-  let onerrorCallback: (() => void) | null = null;
+const createMockImage = (
+  width = 200,
+  height = 150,
+  shouldError = false,
+  withEventListeners = false,
+) => {
+  if (withEventListeners) {
+    const listeners: Record<string, Function[]> = {};
+    let _src = '';
+    let _onload: ((event: Event) => void) | null = null;
 
-  global.Image = vi.fn().mockImplementation(() => {
-    const img: any = {
-      width,
-      height,
-    };
+    global.Image = vi.fn().mockImplementation(() => {
+      const img: any = {
+        width,
+        height,
+        onerror: null,
+        addEventListener: (event: string, handler: any) => {
+          if (!listeners[event]) {
+            listeners[event] = [];
+          }
+          listeners[event].push(handler);
+        },
+      };
 
-    if (!shouldError) {
       Object.defineProperty(img, 'onload', {
-        set: (handler: () => void) => {
-          onloadCallback = handler;
+        get: () => _onload,
+        set: (handler: ((event: Event) => void) | null) => {
+          _onload = handler;
         },
       });
-      img.onerror = null;
-    } else {
-      img.onload = null;
-      Object.defineProperty(img, 'onerror', {
-        set: (handler: () => void) => {
-          onerrorCallback = handler;
+
+      Object.defineProperty(img, 'src', {
+        get: () => _src,
+        set: (value: string) => {
+          _src = value;
+          setTimeout(() => {
+            const event = new Event('load');
+            if (_onload) _onload(event);
+            if (listeners['load']) {
+              listeners['load'].forEach((fn) => fn(event));
+            }
+          }, 0);
         },
       });
-    }
 
-    Object.defineProperty(img, 'src', {
-      set: () => {
-        setTimeout(() => {
-          if (!shouldError && onloadCallback) onloadCallback();
-          if (shouldError && onerrorCallback) onerrorCallback();
-        }, 0);
-      },
-    });
+      return img;
+    }) as unknown as typeof Image;
+  } else {
+    let onloadCallback: (() => void) | null = null;
+    let onerrorCallback: (() => void) | null = null;
 
-    return img;
-  }) as unknown as typeof Image;
+    global.Image = vi.fn().mockImplementation(() => {
+      const img: any = {
+        width,
+        height,
+      };
+
+      if (!shouldError) {
+        Object.defineProperty(img, 'onload', {
+          set: (handler: () => void) => {
+            onloadCallback = handler;
+          },
+        });
+        img.onerror = null;
+      } else {
+        img.onload = null;
+        Object.defineProperty(img, 'onerror', {
+          set: (handler: () => void) => {
+            onerrorCallback = handler;
+          },
+        });
+      }
+
+      Object.defineProperty(img, 'src', {
+        set: () => {
+          setTimeout(() => {
+            if (!shouldError && onloadCallback) onloadCallback();
+            if (shouldError && onerrorCallback) onerrorCallback();
+          }, 0);
+        },
+      });
+
+      return img;
+    }) as unknown as typeof Image;
+  }
 };
 
-const createMockCanvas = (hasContext = true) => {
+const createMockCanvas = (
+  hasContext = true,
+  options: {
+    toDataURL?: string;
+    toBlob?: boolean;
+    width?: number;
+    height?: number;
+  } = {},
+) => {
   const originalCreateElement = document.createElement.bind(document);
   const mockCtx = hasContext
     ? {
@@ -92,11 +148,22 @@ const createMockCanvas = (hasContext = true) => {
       }
     : null;
 
-  const mockCanvas = {
-    width: 0,
-    height: 0,
+  const mockCanvas: any = {
+    width: options.width ?? 0,
+    height: options.height ?? 0,
     getContext: vi.fn().mockReturnValue(mockCtx),
   };
+
+  if (options.toDataURL) {
+    mockCanvas.toDataURL = vi.fn().mockReturnValue(options.toDataURL);
+  }
+
+  if (options.toBlob) {
+    mockCanvas.toBlob = vi.fn((callback: any) => {
+      const blob = new Blob(['fake image data'], { type: 'image/jpeg' });
+      callback(blob);
+    });
+  }
 
   const spy = vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
     if (tag === 'canvas') {
@@ -252,12 +319,10 @@ describe('PDF Utilities', () => {
     });
 
     it('should successfully compress when size is within limit', async () => {
+      const smallJpegBase64 =
+        'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=';
       const mockCanvas = {
-        toDataURL: vi
-          .fn()
-          .mockReturnValue(
-            'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=',
-          ),
+        toDataURL: vi.fn().mockReturnValue(smallJpegBase64),
         width: 100,
         height: 100,
       } as unknown as HTMLCanvasElement;
@@ -301,32 +366,18 @@ describe('PDF Utilities', () => {
       createMockImage(200, 150, false);
 
       const mockImageData =
-        'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=';
+        'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAhRAxEAPwCwABmX/9k=';
 
-      const originalCreateElement = document.createElement.bind(document);
-      const mockCtx = {
-        fillStyle: '',
-        fillRect: vi.fn(),
-        drawImage: vi.fn(),
-      };
-
-      const mockCanvas = {
-        width: 0,
-        height: 0,
-        getContext: vi.fn().mockReturnValue(mockCtx),
-        toDataURL: vi.fn().mockReturnValue(mockImageData),
-      };
-
-      vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
-        if (tag === 'canvas') {
-          return mockCanvas as unknown as HTMLCanvasElement;
-        }
-        return originalCreateElement(tag);
+      const { spy } = createMockCanvas(true, {
+        toDataURL: mockImageData,
+        width: 200,
+        height: 150,
       });
 
       const mergedPdf = await mergePdfFiles([jpegFile]);
       expect(mergedPdf.numPages).toBe(1);
 
+      spy.mockRestore();
       cleanupImageMocks(mockSetup);
     });
   });
@@ -420,80 +471,19 @@ describe('PDF Utilities', () => {
       const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
 
       const mockSetup = setupImageMocks();
+      createMockImage(100, 100, false, true);
 
-      // Create more complex Image mock for event handling
-      const createComplexMockImage = () => {
-        const listeners: Record<string, Function[]> = {};
-        let _src = '';
-        let _onload: ((event: Event) => void) | null = null;
-
-        global.Image = vi.fn().mockImplementation(() => {
-          const img: any = {
-            width: 100,
-            height: 100,
-            onerror: null,
-            addEventListener: (event: string, handler: any) => {
-              if (!listeners[event]) {
-                listeners[event] = [];
-              }
-              listeners[event].push(handler);
-            },
-          };
-
-          Object.defineProperty(img, 'onload', {
-            get: () => _onload,
-            set: (handler: ((event: Event) => void) | null) => {
-              _onload = handler;
-            },
-          });
-
-          Object.defineProperty(img, 'src', {
-            get: () => _src,
-            set: (value: string) => {
-              _src = value;
-              setTimeout(() => {
-                const event = new Event('load');
-                if (_onload) _onload(event);
-                if (listeners['load']) {
-                  listeners['load'].forEach((fn) => fn(event));
-                }
-              }, 0);
-            },
-          });
-
-          return img;
-        }) as unknown as typeof Image;
-      };
-
-      createComplexMockImage();
-
-      const originalCreateElement = document.createElement.bind(document);
-      const mockCanvas = {
-        getContext: vi.fn().mockReturnValue({
-          drawImage: vi.fn(),
-        }),
-        toDataURL: vi.fn().mockReturnValue(mockImageData),
-        toBlob: vi.fn((callback) => {
-          const blob = new Blob(['fake image data'], { type: 'image/jpeg' });
-          callback(blob);
-        }),
+      const { spy } = createMockCanvas(true, {
+        toDataURL: mockImageData,
+        toBlob: true,
         width: 100,
         height: 100,
-      };
-
-      const createElementSpy = vi
-        .spyOn(document, 'createElement')
-        .mockImplementation((tag: any) => {
-          if (tag === 'canvas') {
-            return mockCanvas as unknown as HTMLCanvasElement;
-          }
-          return originalCreateElement(tag);
-        });
+      });
 
       const mergedPdf = await mergePdfFiles([pdfFile, imageFile]);
       expect(mergedPdf.numPages).toBe(2); // 1 page from PDF + 1 page from image
 
-      createElementSpy.mockRestore();
+      spy.mockRestore();
       cleanupImageMocks(mockSetup);
     });
   });

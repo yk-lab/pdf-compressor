@@ -4,14 +4,7 @@ import { loadDefaultJapaneseParser } from 'budoux';
 let parserPromise: ReturnType<typeof loadDefaultJapaneseParser> | undefined;
 const getParser = async () => {
   if (!parserPromise) {
-    try {
-      parserPromise = await loadDefaultJapaneseParser();
-    } catch (e) {
-      // 次回以降の再試行のため、失敗時はキャッシュを解放
-      parserPromise = undefined;
-      console.error('Failed to load BudouX parser:', e);
-      throw e;
-    }
+    parserPromise = loadDefaultJapaneseParser();
   }
   return parserPromise;
 };
