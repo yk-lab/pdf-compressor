@@ -226,11 +226,47 @@ All processing happens client-side without server uploads.
 
 ## Development Tips
 
+### Testing Guidelines
+
+#### テストコード作成時の注意事項
+
+- **こまめな実行**: テストコードは小さな単位で作成し、都度実行して動作確認する
+- **モックの適切な実装**: グローバルオブジェクトをモックする際は、元の実装を保存してテスト後に復元する
+- **カバレッジ目標**: patch coverageで80%以上を目指す
+- **エラーケースの網羅**: 成功パターンだけでなく、エラーパターンも必ずテストする
+
+#### よくあるモックパターン
+
+```typescript
+// Image オブジェクトのモック例
+const originalImage = global.Image;
+global.Image = vi.fn().mockImplementation(() => {
+  const img: any = { width: 200, height: 150 };
+  Object.defineProperty(img, 'onload', {
+    set: (handler: () => void) => {
+      setTimeout(() => handler(), 0);
+    },
+  });
+  return img;
+}) as unknown as typeof Image;
+// テスト後: global.Image = originalImage;
+
+// createElement のモック例（再帰を避ける）
+const originalCreateElement = document.createElement.bind(document);
+vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
+  if (tag === 'canvas') {
+    return mockCanvas as unknown as HTMLCanvasElement;
+  }
+  return originalCreateElement(tag);
+});
+```
+
 ### Running Single Tests
 
 - **Unit test**: `pnpm test-dev -- <test-file-name>` (e.g., `pnpm test-dev -- pdf.test`)
 - **E2E test**: `pnpm test:e2e -- <test-file-path>` (e.g., `pnpm test:e2e -- e2e/vue.spec.ts`)
 - **Specific test pattern**: Use `-t` flag with test name pattern
+- **Coverage確認**: `pnpm test:unit` でカバレッジレポートを確認
 
 ### Key Development Workflows
 
