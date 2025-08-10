@@ -8,8 +8,8 @@ describe('DownloadSection', () => {
       props: {
         downloadUrl: null,
         fileName: 'test.pdf',
-        size: 1024
-      }
+        size: 1024,
+      },
     });
     expect(wrapper.find('a').exists()).toBe(false);
     expect(wrapper.find('div').exists()).toBe(false);
@@ -20,8 +20,8 @@ describe('DownloadSection', () => {
       props: {
         downloadUrl: 'https://example.com/file.pdf',
         fileName: 'test.pdf',
-        size: 1024
-      }
+        size: 1024,
+      },
     });
 
     const link = wrapper.find('a');
@@ -35,8 +35,8 @@ describe('DownloadSection', () => {
       props: {
         downloadUrl: 'https://example.com/file.pdf',
         fileName: 'test.pdf',
-        size: 1048576 // 1MB
-      }
+        size: 1048576, // 1MB
+      },
     });
 
     expect(wrapper.text()).toContain('PDFをダウンロード');
@@ -49,8 +49,8 @@ describe('DownloadSection', () => {
       props: {
         downloadUrl: 'https://example.com/file.pdf',
         fileName: 'test.pdf',
-        size: 1024
-      }
+        size: 1024,
+      },
     });
 
     const link = wrapper.find('a');
@@ -74,8 +74,8 @@ describe('DownloadSection', () => {
         props: {
           downloadUrl: 'https://example.com/file.pdf',
           fileName: 'test.pdf',
-          size
-        }
+          size,
+        },
       });
       expect(wrapper.text()).toContain(expected);
     });
@@ -86,13 +86,15 @@ describe('DownloadSection', () => {
       props: {
         downloadUrl: 'https://example.com/file.pdf',
         fileName: 'test.pdf',
-        size: 1024
-      }
+        size: 1024,
+      },
     });
 
     const warning = wrapper.find('p.text-sm.text-gray-500');
     expect(warning.exists()).toBe(true);
-    expect(warning.text()).toContain('※ファイルサイズは目安です。実際のファイルサイズはブラウザによって異なります。');
+    expect(warning.text()).toContain(
+      '※ファイルサイズは目安です。実際のファイルサイズはブラウザによって異なります。',
+    );
   });
 
   it('wraps content in a div with mt-4 class', () => {
@@ -100,8 +102,8 @@ describe('DownloadSection', () => {
       props: {
         downloadUrl: 'https://example.com/file.pdf',
         fileName: 'test.pdf',
-        size: 1024
-      }
+        size: 1024,
+      },
     });
 
     const container = wrapper.find('div');

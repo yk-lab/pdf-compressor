@@ -5,7 +5,7 @@ let parserPromise: ReturnType<typeof loadDefaultJapaneseParser> | undefined;
 const getParser = () => {
   if (!parserPromise) parserPromise = loadDefaultJapaneseParser();
   return parserPromise;
-}
+};
 
 export default {
   mounted(el: HTMLElement) {
@@ -13,5 +13,5 @@ export default {
     el.innerHTML = parser.translateHTMLString(el.textContent || '');
     el.style.textWrap = 'balance';
     el.style.wordBreak = 'auto-phrase';
-  }
+  },
 };

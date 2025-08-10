@@ -12,26 +12,26 @@ export class PDFCompressionSizeError extends Error {
 }
 
 /* File が PDF かどうかを判定する
-  * @param file File
-  * @return PDF かどうか
-  */
+ * @param file File
+ * @return PDF かどうか
+ */
 const isPdf = (file: File): boolean => {
   return file.type === 'application/pdf';
-}
+};
 
 /* File が画像かどうかを判定する
-  * @param file File
-  * @return 画像かどうか
-  */
+ * @param file File
+ * @return 画像かどうか
+ */
 const supportedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
 const isImage = (file: File): boolean => supportedImageTypes.has(file.type);
 
 /* PDFファイルをCanvasに描画する関数
-  * @param pdf PDFDocumentProxy
-  * @param pageNumber ページ番号
-  * @param scale 描画スケール
-  * @return 描画したCanvas
-  */
+ * @param pdf PDFDocumentProxy
+ * @param pageNumber ページ番号
+ * @param scale 描画スケール
+ * @return 描画したCanvas
+ */
 async function renderPdfPageToCanvas(
   pdf: PDFDocumentProxy,
   pageNumber: number,
@@ -55,11 +55,11 @@ async function renderPdfPageToCanvas(
 }
 
 /* PDFファイルをCanvasに描画する関数
-  * @param pdf PDFDocumentProxy
-  * @param pageNumber ページ番号
-  * @param scale 描画スケール
-  * @return 描画したCanvas
-  */
+ * @param pdf PDFDocumentProxy
+ * @param pageNumber ページ番号
+ * @param scale 描画スケール
+ * @return 描画したCanvas
+ */
 export async function renderPdfToCanvases(
   pdf: PDFDocumentProxy,
   {
@@ -77,12 +77,12 @@ export async function renderPdfToCanvases(
 }
 
 /* 複数のPDFファイルと画像ファイルを結合する関数
-  * @param files PDFまたは画像ファイルの配列
-  * @return 結合したPDFファイル
-  */
+ * @param files PDFまたは画像ファイルの配列
+ * @return 結合したPDFファイル
+ */
 export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> => {
   if (files.length === 0) {
-    throw new Error("At least one file is required.");
+    throw new Error('At least one file is required.');
   }
 
   const mergedPdf = await PDFDocument.create();
@@ -116,8 +116,9 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
     }
   }
 
-  return await pdfjsLib.getDocument({ data: await mergedPdf.save(), cMapUrl, cMapPacked: true }).promise;
-}
+  return await pdfjsLib.getDocument({ data: await mergedPdf.save(), cMapUrl, cMapPacked: true })
+    .promise;
+};
 
 /**
  * Canvasの配列からサイズ圧縮したPDFを生成する
@@ -125,9 +126,9 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
  * @param maxSizeBytes 最大ファイルサイズ
  */
 /* 画像ファイルをCanvasに読み込む関数
-  * @param file 画像ファイル
-  * @return 描画したCanvas
-  */
+ * @param file 画像ファイル
+ * @return 描画したCanvas
+ */
 async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
