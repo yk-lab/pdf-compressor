@@ -35,7 +35,6 @@ describe('MainArea.vue - addFiles', () => {
     const wrapper = mount(MainArea);
     const files = [
       new File([''], 'test.pdf', { type: 'application/pdf' }),
-      new File([''], 'test.txt', { type: 'text/plain' }),
       new File([''], 'test2.pdf', { type: 'application/pdf' }),
       new File([''], 'test.jpg', { type: 'image/jpeg' }),
       new File([''], 'test.png', { type: 'image/png' }),

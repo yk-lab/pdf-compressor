@@ -87,7 +87,7 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
   }
 
   const mergedPdf = await PDFDocument.create();
-  
+
   for (const file of files) {
     if (isPdf(file)) {
       // PDFファイルの場合
@@ -97,18 +97,18 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
     } else if (isImage(file)) {
       // 画像ファイルの場合
       const canvas = await loadImageToCanvas(file);
-      
+
       // 画像が1MBを超える場合は圧縮
       let quality = 1.0;
       let imageData = canvas.toDataURL('image/jpeg', quality);
       let imageSize = imageData.length * 0.75; // Base64のサイズから実際のバイト数を推定
-      
+
       while (imageSize > 1_000_000 && quality > 0.1) {
         quality -= 0.1;
         imageData = canvas.toDataURL('image/jpeg', quality);
         imageSize = imageData.length * 0.75;
       }
-      
+
       const jpgImage = await mergedPdf.embedJpg(imageData);
       const page = mergedPdf.addPage([jpgImage.width, jpgImage.height]);
       page.drawImage(jpgImage, { x: 0, y: 0, width: jpgImage.width, height: jpgImage.height });
@@ -133,7 +133,7 @@ async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
-    
+
     img.onload = () => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -142,26 +142,26 @@ async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
         reject(new Error('Failed to get canvas context'));
         return;
       }
-      
+
       canvas.width = img.width;
       canvas.height = img.height;
-      
+
       // 透過画像の場合のために白い背景を先に描画
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
+
       // その上に画像を描画
       ctx.drawImage(img, 0, 0);
-      
+
       URL.revokeObjectURL(url);
       resolve(canvas);
     };
-    
+
     img.onerror = () => {
       URL.revokeObjectURL(url);
       reject(new Error('Failed to load image'));
     };
-    
+
     img.src = url;
   });
 }
@@ -170,7 +170,7 @@ export async function createCompressedPdfFromImages(
   pages: HTMLCanvasElement[],
   {
     maxSizeBytes = 1_000_000,
-    cutQuality = 0.1,
+    cutQuality = 0.04,
   }: {
     maxSizeBytes?: number;
     cutQuality?: number;

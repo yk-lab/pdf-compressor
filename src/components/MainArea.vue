@@ -1,32 +1,6 @@
 <template>
   <div>
-    <label
-      :for="inputFileId"
-      ref="dropZoneRef"
-      class="block border-dashed border-2 border-gray-400 px-4 py-8 rounded cursor-pointer"
-      :class="{ 'border-cyan-600': isOverDropZone }"
-      aria-label="PDFファイルをアップロード"
-    >
-      <input
-        type="file"
-        :id="inputFileId"
-        class="hidden"
-        multiple
-        @change="handleFiles"
-        accept=".pdf,.jpg,.jpeg,.png,.webp,.gif"
-      />
-      <div class="text-cyan-600">
-        <Upload class="size-8 mx-auto" aria-hidden="true" />
-      </div>
-      <div class="text-gray-600 text-center mt-4">
-        PDFまたは画像ファイルをここに
-        <em class="px-2 text-gray-900 bg-cyan-50">ドラッグ＆ドロップ</em>
-        または
-        <em class="px-2 text-gray-900 bg-cyan-50">クリック</em>
-        して<template v-if="pdfFiles.length > 0">追加</template
-        ><template v-else>選択</template>してください。
-      </div>
-    </label>
+    <FileUploadZone :has-files="pdfFiles.length > 0" @add-files="addFiles" />
 
     <FileList class="mt-4" v-model="pdfFiles" />
 
@@ -38,37 +12,22 @@
       PDFを結合・ファイルサイズ縮小
     </button>
 
-    <div v-if="compressedPDF" class="mt-4">
-      <a
-        :href="compressedPDF"
-        :download="downloadFileName"
-        class="text-cyan-600 underline hover:text-cyan-500 mt-4 hover:underline text-lg font-semibold"
-      >
-        PDFをダウンロード
-        <span class="text-base font-medium"> ({{ filesizeDisplay }}) </span>
-      </a>
-      <p class="text-sm text-gray-500">
-        ※ファイルサイズは目安です。実際のファイルサイズはブラウザによって異なります。
-      </p>
-    </div>
+    <DownloadSection :download-url="compressedPDF" :file-name="downloadFileName" :size="fileSize" />
   </div>
 </template>
 
 <script setup lang="ts">
 import * as pdfjsLib from 'pdfjs-dist';
-import filesize from 'filesize.js';
-import { Upload } from 'lucide-vue-next';
-import { useId, computed, ref, watch, onUnmounted } from 'vue';
+import { ref, watch, onUnmounted } from 'vue';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { getGeneratedPDFOutputFileName } from '@/utils/file';
 import { mergePdfFiles, renderPdfToCanvases, createCompressedPdfFromImages } from '@/utils/pdf';
+import FileUploadZone from './FileUploadZone.vue';
 import FileList from './FileList.vue';
-import { useDropZone } from '@vueuse/core';
+import DownloadSection from './DownloadSection.vue';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
 
-const inputFileId = useId();
-const dropZoneRef = ref<HTMLLabelElement>();
 const pdfFiles = ref<{ id: string; file: File }[]>([]); // 選択されたPDFファイル
 const compressedPDF = ref<string | null>(null); // 圧縮後のPDF Blob URL
 const fileSize = ref(0); // 圧縮後のファイルサイズ
@@ -83,47 +42,10 @@ const resetCompressedPDF = () => {
   fileSize.value = 0;
 };
 
-const ALLOWED_FILE_TYPES = [
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif'
-];
-
-const addFiles = (files: File[] | null): void => {
-  if (!files || !files.length) {
-    return;
-  }
-
-  const filteredFiles = files.filter((file) => ALLOWED_FILE_TYPES.includes(file.type));
-  if (!filteredFiles.length) {
-    console.warn('PDFまたは画像ファイルが含まれていません');
-    return;
-  }
-
-  pdfFiles.value.push(...filteredFiles.map((file) => ({ id: crypto.randomUUID(), file })));
+const addFiles = (files: File[]): void => {
+  pdfFiles.value.push(...files.map((file) => ({ id: crypto.randomUUID(), file })));
   resetCompressedPDF();
 };
-
-const handleFiles = async (event: Event) => {
-  if (!(event.target instanceof HTMLInputElement)) throw new TypeError();
-  const files = event.target.files;
-  if (files) {
-    addFiles(Array.from(files));
-  }
-  event.target.value = '';
-};
-
-const { isOverDropZone } = useDropZone(dropZoneRef, {
-  onDrop: addFiles,
-  // specify the types of data to be received.
-  dataTypes: ALLOWED_FILE_TYPES,
-  // control multi-file drop
-  multiple: true,
-  // whether to prevent default behavior for unhandled events
-  preventDefaultForUnhandled: false,
-});
 
 // メイン処理例
 async function handlePdfFiles(files: File[]) {
@@ -147,8 +69,6 @@ async function handlePdfFiles(files: File[]) {
 const mergeAndCompressPDF = () => {
   handlePdfFiles(pdfFiles.value.map((f) => f.file));
 };
-
-const filesizeDisplay = computed(() => filesize(fileSize.value));
 
 watch(pdfFiles, () => {
   resetCompressedPDF();
