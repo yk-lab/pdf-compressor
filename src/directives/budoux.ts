@@ -1,5 +1,6 @@
 import DOMPurify from 'dompurify';
 import { loadDefaultJapaneseParser } from 'budoux';
+import type { ObjectDirective } from 'vue';
 
 let parserPromise: ReturnType<typeof loadDefaultJapaneseParser> | undefined;
 const getParser = async () => {
@@ -56,4 +57,4 @@ export default {
   async updated(el: HTMLElement) {
     await applyBudoux(el);
   },
-};
+} satisfies ObjectDirective<HTMLElement>;

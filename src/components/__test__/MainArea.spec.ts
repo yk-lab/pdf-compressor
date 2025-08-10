@@ -34,14 +34,24 @@ describe('MainArea', () => {
 });
 
 describe('MainArea.vue - addFiles', () => {
-  const mockUUID = 'test-uuid';
+  let uuidCounter = 0;
 
   beforeEach(() => {
-    global.URL.revokeObjectURL = vi.fn();
+    // Reset UUID counter
+    uuidCounter = 0;
 
-    // Mock crypto.randomUUID
+    // Ensure URL methods exist before mocking
+    if (!global.URL) {
+      global.URL = {} as typeof URL;
+    }
+    if (!global.URL.revokeObjectURL) {
+      global.URL.revokeObjectURL = () => {};
+    }
+    vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    // Mock crypto.randomUUID to return unique values
     // @ts-expect-error: Mocking randomUUID
-    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => mockUUID);
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => `uuid-${++uuidCounter}`);
   });
 
   afterEach(() => {
@@ -67,29 +77,31 @@ describe('MainArea.vue - addFiles', () => {
 
     const pdfFiles = wrapper.vm.pdfFiles;
     expect(pdfFiles).toHaveLength(4);
+    expect(crypto.randomUUID).toHaveBeenCalledTimes(4);
+
     expect(pdfFiles[0]).toEqual({
-      id: 'test-uuid',
+      id: expect.any(String),
       file: expect.objectContaining({
         name: 'test.pdf',
         type: 'application/pdf',
       }),
     });
     expect(pdfFiles[1]).toEqual({
-      id: 'test-uuid',
+      id: expect.any(String),
       file: expect.objectContaining({
         name: 'test2.pdf',
         type: 'application/pdf',
       }),
     });
     expect(pdfFiles[2]).toEqual({
-      id: 'test-uuid',
+      id: expect.any(String),
       file: expect.objectContaining({
         name: 'test.jpg',
         type: 'image/jpeg',
       }),
     });
     expect(pdfFiles[3]).toEqual({
-      id: 'test-uuid',
+      id: expect.any(String),
       file: expect.objectContaining({
         name: 'test.png',
         type: 'image/png',
@@ -119,17 +131,36 @@ describe('MainArea.vue - mergeAndCompressPDF', () => {
   let mockCreateObjectURL: typeof URL.createObjectURL;
   let mockRevokeObjectURL: typeof URL.revokeObjectURL;
   const mockObjectURL = 'blob:mock-url';
+  let uuidCounter = 0;
 
   beforeEach(() => {
+    // Reset UUID counter
+    uuidCounter = 0;
+
+    // Ensure URL methods exist before mocking
+    if (!global.URL) {
+      global.URL = {} as typeof URL;
+    }
+    if (!global.URL.createObjectURL) {
+      global.URL.createObjectURL = () => '';
+    }
+    if (!global.URL.revokeObjectURL) {
+      global.URL.revokeObjectURL = () => {};
+    }
+
     // Mock URL methods
     mockCreateObjectURL = vi.fn().mockReturnValue(mockObjectURL);
     mockRevokeObjectURL = vi.fn();
-    global.URL.createObjectURL = mockCreateObjectURL;
-    global.URL.revokeObjectURL = mockRevokeObjectURL;
+    vi.spyOn(global.URL, 'createObjectURL').mockImplementation(
+      mockCreateObjectURL as unknown as typeof URL.createObjectURL,
+    );
+    vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(
+      mockRevokeObjectURL as unknown as typeof URL.revokeObjectURL,
+    );
 
-    // Mock crypto.randomUUID
+    // Mock crypto.randomUUID to return unique values
     // @ts-expect-error: Mocking randomUUID
-    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => 'test-uuid');
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => `uuid-${++uuidCounter}`);
 
     // Setup default mock returns
     // Create a mock PDFDocumentProxy
@@ -145,7 +176,7 @@ describe('MainArea.vue - mergeAndCompressPDF', () => {
   });
 
   afterEach(() => {
-    vi.clearAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('should handle files successfully and generate compressed PDF', async () => {

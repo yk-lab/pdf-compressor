@@ -2,6 +2,16 @@
 /* eslint-disable @typescript-eslint/no-unsafe-function-type */
 import { describe, it, expect, vi } from 'vitest';
 import * as pdfjsLib from 'pdfjs-dist';
+
+// Mock PDF.js worker setup to stabilize tests
+vi.mock('pdfjs-dist/build/pdf.worker.mjs?url', () => ({
+  default: 'pdfjs-dist/legacy/build/pdf.worker.mjs',
+}));
+
+// Set up worker to use legacy build for Node.js environment
+// This prevents worker-related errors and stabilizes tests
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdfjs-dist/legacy/build/pdf.worker.mjs';
+
 import {
   renderPdfToCanvases,
   mergePdfFiles,

@@ -30,6 +30,7 @@ interface BudouxDirective {
 describe('budoux directive', () => {
   let mockParser: MockParser;
   let budouxDirective: BudouxDirective;
+  let originalCSS: typeof CSS;
 
   beforeEach(async () => {
     // Clear all mocks
@@ -52,6 +53,7 @@ describe('budoux directive', () => {
     budouxDirective = (await import('./budoux')).default;
 
     // Mock CSS.supports
+    originalCSS = global.CSS;
     global.CSS = {
       supports: vi.fn((prop: string) => {
         return prop === 'text-wrap: balance' || prop === 'word-break: auto-phrase';
@@ -61,6 +63,7 @@ describe('budoux directive', () => {
 
   afterEach(() => {
     vi.clearAllMocks();
+    global.CSS = originalCSS;
   });
 
   describe('mounted hook', () => {
