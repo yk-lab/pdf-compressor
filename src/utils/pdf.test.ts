@@ -13,6 +13,101 @@ import {
 } from './pdf';
 import { PDFDocument, StandardFonts, rgb, PDFPage } from 'pdf-lib';
 
+// Mock setup helpers
+interface MockImageSetup {
+  originalImage: typeof Image;
+  originalCreateObjectURL: typeof URL.createObjectURL;
+  originalRevokeObjectURL: typeof URL.revokeObjectURL;
+}
+
+const setupImageMocks = (): MockImageSetup => {
+  const originalImage = global.Image;
+  const originalCreateObjectURL = global.URL.createObjectURL;
+  const originalRevokeObjectURL = global.URL.revokeObjectURL;
+
+  // Mock URL methods
+  global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test');
+  global.URL.revokeObjectURL = vi.fn();
+
+  return {
+    originalImage,
+    originalCreateObjectURL,
+    originalRevokeObjectURL,
+  };
+};
+
+const cleanupImageMocks = (setup: MockImageSetup) => {
+  vi.restoreAllMocks();
+  global.Image = setup.originalImage;
+  global.URL.createObjectURL = setup.originalCreateObjectURL;
+  global.URL.revokeObjectURL = setup.originalRevokeObjectURL;
+};
+
+const createMockImage = (width = 200, height = 150, shouldError = false) => {
+  let onloadCallback: (() => void) | null = null;
+  let onerrorCallback: (() => void) | null = null;
+
+  global.Image = vi.fn().mockImplementation(() => {
+    const img: any = {
+      width,
+      height,
+    };
+
+    if (!shouldError) {
+      Object.defineProperty(img, 'onload', {
+        set: (handler: () => void) => {
+          onloadCallback = handler;
+        },
+      });
+      img.onerror = null;
+    } else {
+      img.onload = null;
+      Object.defineProperty(img, 'onerror', {
+        set: (handler: () => void) => {
+          onerrorCallback = handler;
+        },
+      });
+    }
+
+    Object.defineProperty(img, 'src', {
+      set: () => {
+        setTimeout(() => {
+          if (!shouldError && onloadCallback) onloadCallback();
+          if (shouldError && onerrorCallback) onerrorCallback();
+        }, 0);
+      },
+    });
+
+    return img;
+  }) as unknown as typeof Image;
+};
+
+const createMockCanvas = (hasContext = true) => {
+  const originalCreateElement = document.createElement.bind(document);
+  const mockCtx = hasContext
+    ? {
+        fillStyle: '',
+        fillRect: vi.fn(),
+        drawImage: vi.fn(),
+      }
+    : null;
+
+  const mockCanvas = {
+    width: 0,
+    height: 0,
+    getContext: vi.fn().mockReturnValue(mockCtx),
+  };
+
+  const spy = vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
+    if (tag === 'canvas') {
+      return mockCanvas as unknown as HTMLCanvasElement;
+    }
+    return originalCreateElement(tag);
+  });
+
+  return { mockCanvas, mockCtx, spy };
+};
+
 // Helper functions for testing
 const createPage = async (pdfDoc: PDFDocument): Promise<PDFPage> => {
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
@@ -41,183 +136,46 @@ describe('PDF Utilities', () => {
     it('should successfully load an image to canvas', async () => {
       const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
 
-      // Save original implementations
-      const originalImage = global.Image;
-      const originalCreateObjectURL = global.URL.createObjectURL;
-      const originalRevokeObjectURL = global.URL.revokeObjectURL;
-      const originalCreateElement = document.createElement.bind(document);
-
-      // Mock Image
-      let onloadCallback: (() => void) | null = null;
-      global.Image = vi.fn().mockImplementation(() => {
-        const img: any = {
-          width: 200,
-          height: 150,
-          onerror: null,
-        };
-
-        Object.defineProperty(img, 'onload', {
-          set: (handler: () => void) => {
-            onloadCallback = handler;
-          },
-        });
-
-        Object.defineProperty(img, 'src', {
-          set: () => {
-            setTimeout(() => {
-              if (onloadCallback) onloadCallback();
-            }, 0);
-          },
-        });
-
-        return img;
-      }) as unknown as typeof Image;
-
-      // Mock URL methods
-      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test');
-      global.URL.revokeObjectURL = vi.fn();
-
-      // Mock canvas
-      const mockCtx = {
-        fillStyle: '',
-        fillRect: vi.fn(),
-        drawImage: vi.fn(),
-      };
-
-      const mockCanvas = {
-        width: 0,
-        height: 0,
-        getContext: vi.fn().mockReturnValue(mockCtx),
-      };
-
-      vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
-        if (tag === 'canvas') {
-          return mockCanvas as unknown as HTMLCanvasElement;
-        }
-        return originalCreateElement(tag);
-      });
+      const mockSetup = setupImageMocks();
+      createMockImage(200, 150, false);
+      const { mockCanvas, mockCtx } = createMockCanvas(true);
 
       await loadImageToCanvas(imageFile);
 
       expect(global.URL.createObjectURL).toHaveBeenCalledWith(imageFile);
       expect(mockCanvas.width).toBe(200);
       expect(mockCanvas.height).toBe(150);
-      expect(mockCtx.fillStyle).toBe('#FFFFFF');
-      expect(mockCtx.fillRect).toHaveBeenCalledWith(0, 0, 200, 150);
-      expect(mockCtx.drawImage).toHaveBeenCalled();
+      expect(mockCtx!.fillStyle).toBe('#FFFFFF');
+      expect(mockCtx!.fillRect).toHaveBeenCalledWith(0, 0, 200, 150);
+      expect(mockCtx!.drawImage).toHaveBeenCalled();
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
 
-      // Cleanup
-      vi.restoreAllMocks();
-      global.Image = originalImage;
-      global.URL.createObjectURL = originalCreateObjectURL;
-      global.URL.revokeObjectURL = originalRevokeObjectURL;
+      cleanupImageMocks(mockSetup);
     });
 
     it('should handle image load error', async () => {
       const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
 
-      // Save original implementations
-      const originalImage = global.Image;
-      const originalCreateObjectURL = global.URL.createObjectURL;
-      const originalRevokeObjectURL = global.URL.revokeObjectURL;
-
-      // Mock Image with error
-      let onerrorCallback: (() => void) | null = null;
-      global.Image = vi.fn().mockImplementation(() => {
-        const img: any = {
-          onload: null,
-        };
-
-        Object.defineProperty(img, 'onerror', {
-          set: (handler: () => void) => {
-            onerrorCallback = handler;
-          },
-        });
-
-        Object.defineProperty(img, 'src', {
-          set: () => {
-            setTimeout(() => {
-              if (onerrorCallback) onerrorCallback();
-            }, 0);
-          },
-        });
-
-        return img;
-      }) as unknown as typeof Image;
-
-      // Mock URL methods
-      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test');
-      global.URL.revokeObjectURL = vi.fn();
+      const mockSetup = setupImageMocks();
+      createMockImage(200, 150, true);
 
       await expect(loadImageToCanvas(imageFile)).rejects.toThrow('Failed to load image');
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
 
-      // Cleanup
-      global.Image = originalImage;
-      global.URL.createObjectURL = originalCreateObjectURL;
-      global.URL.revokeObjectURL = originalRevokeObjectURL;
+      cleanupImageMocks(mockSetup);
     });
 
     it('should handle missing canvas context', async () => {
       const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
 
-      // Save original implementations
-      const originalImage = global.Image;
-      const originalCreateObjectURL = global.URL.createObjectURL;
-      const originalRevokeObjectURL = global.URL.revokeObjectURL;
-      const originalCreateElement = document.createElement.bind(document);
-
-      // Mock Image
-      let onloadCallback: (() => void) | null = null;
-      global.Image = vi.fn().mockImplementation(() => {
-        const img: any = {
-          width: 200,
-          height: 150,
-          onerror: null,
-        };
-
-        Object.defineProperty(img, 'onload', {
-          set: (handler: () => void) => {
-            onloadCallback = handler;
-          },
-        });
-
-        Object.defineProperty(img, 'src', {
-          set: () => {
-            setTimeout(() => {
-              if (onloadCallback) onloadCallback();
-            }, 0);
-          },
-        });
-
-        return img;
-      }) as unknown as typeof Image;
-
-      // Mock URL methods
-      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test');
-      global.URL.revokeObjectURL = vi.fn();
-
-      // Mock canvas with null context
-      const mockCanvas = {
-        getContext: vi.fn().mockReturnValue(null),
-      };
-
-      vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
-        if (tag === 'canvas') {
-          return mockCanvas as unknown as HTMLCanvasElement;
-        }
-        return originalCreateElement(tag);
-      });
+      const mockSetup = setupImageMocks();
+      createMockImage(200, 150, false);
+      createMockCanvas(false);
 
       await expect(loadImageToCanvas(imageFile)).rejects.toThrow('Failed to get canvas context');
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
 
-      // Cleanup
-      vi.restoreAllMocks();
-      global.Image = originalImage;
-      global.URL.createObjectURL = originalCreateObjectURL;
-      global.URL.revokeObjectURL = originalRevokeObjectURL;
+      cleanupImageMocks(mockSetup);
     });
   });
 
@@ -339,43 +297,13 @@ describe('PDF Utilities', () => {
     it('should handle single image file', async () => {
       const jpegFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
 
-      // Save original implementations
-      const originalImage = global.Image;
-      const originalCreateObjectURL = global.URL.createObjectURL;
-      const originalRevokeObjectURL = global.URL.revokeObjectURL;
+      const mockSetup = setupImageMocks();
+      createMockImage(200, 150, false);
+
+      const mockImageData =
+        'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=';
+
       const originalCreateElement = document.createElement.bind(document);
-
-      // Mock Image
-      let onloadCallback: (() => void) | null = null;
-      global.Image = vi.fn().mockImplementation(() => {
-        const img: any = {
-          width: 200,
-          height: 150,
-          onerror: null,
-        };
-
-        Object.defineProperty(img, 'onload', {
-          set: (handler: () => void) => {
-            onloadCallback = handler;
-          },
-        });
-
-        Object.defineProperty(img, 'src', {
-          set: () => {
-            setTimeout(() => {
-              if (onloadCallback) onloadCallback();
-            }, 0);
-          },
-        });
-
-        return img;
-      }) as unknown as typeof Image;
-
-      // Mock URL methods
-      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test');
-      global.URL.revokeObjectURL = vi.fn();
-
-      // Mock canvas
       const mockCtx = {
         fillStyle: '',
         fillRect: vi.fn(),
@@ -386,11 +314,7 @@ describe('PDF Utilities', () => {
         width: 0,
         height: 0,
         getContext: vi.fn().mockReturnValue(mockCtx),
-        toDataURL: vi
-          .fn()
-          .mockReturnValue(
-            'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=',
-          ),
+        toDataURL: vi.fn().mockReturnValue(mockImageData),
       };
 
       vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
@@ -403,11 +327,7 @@ describe('PDF Utilities', () => {
       const mergedPdf = await mergePdfFiles([jpegFile]);
       expect(mergedPdf.numPages).toBe(1);
 
-      // Cleanup
-      vi.restoreAllMocks();
-      global.Image = originalImage;
-      global.URL.createObjectURL = originalCreateObjectURL;
-      global.URL.revokeObjectURL = originalRevokeObjectURL;
+      cleanupImageMocks(mockSetup);
     });
   });
 
@@ -494,64 +414,60 @@ describe('PDF Utilities', () => {
       const pdfFile = new File([pdfData], 'test.pdf', { type: 'application/pdf' });
       pdfFile.arrayBuffer = vi.fn().mockResolvedValue(await generateArrayBuffer(pdfData));
 
-      // Create a test image file (mock canvas toDataURL)
+      // Create a test image file
       const mockImageData =
         'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=';
       const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
 
-      // Save original implementations
-      const originalImage = global.Image;
-      const originalCreateObjectURL = global.URL.createObjectURL;
-      const originalRevokeObjectURL = global.URL.revokeObjectURL;
-      const originalCreateElement = document.createElement.bind(document);
+      const mockSetup = setupImageMocks();
 
-      // Mock Image with proper onload setter support
-      global.Image = vi.fn().mockImplementation(() => {
+      // Create more complex Image mock for event handling
+      const createComplexMockImage = () => {
         const listeners: Record<string, Function[]> = {};
         let _src = '';
         let _onload: ((event: Event) => void) | null = null;
-        const img: any = {
-          width: 100,
-          height: 100,
-          onerror: null,
-          addEventListener: (event: string, handler: any) => {
-            if (!listeners[event]) {
-              listeners[event] = [];
-            }
-            listeners[event].push(handler);
-          },
-        };
 
-        // Define onload property with setter
-        Object.defineProperty(img, 'onload', {
-          get: () => _onload,
-          set: (handler: ((event: Event) => void) | null) => {
-            _onload = handler;
-          },
-        });
-
-        // Define src property with setter that triggers load
-        Object.defineProperty(img, 'src', {
-          get: () => _src,
-          set: (value: string) => {
-            _src = value;
-            setTimeout(() => {
-              const event = new Event('load');
-              if (_onload) _onload(event);
-              if (listeners['load']) {
-                listeners['load'].forEach((fn) => fn(event));
+        global.Image = vi.fn().mockImplementation(() => {
+          const img: any = {
+            width: 100,
+            height: 100,
+            onerror: null,
+            addEventListener: (event: string, handler: any) => {
+              if (!listeners[event]) {
+                listeners[event] = [];
               }
-            }, 0);
-          },
-        });
+              listeners[event].push(handler);
+            },
+          };
 
-        return img;
-      }) as unknown as typeof Image;
+          Object.defineProperty(img, 'onload', {
+            get: () => _onload,
+            set: (handler: ((event: Event) => void) | null) => {
+              _onload = handler;
+            },
+          });
 
-      // Mock URL methods
-      global.URL.createObjectURL = vi.fn().mockReturnValue('blob:test');
-      global.URL.revokeObjectURL = vi.fn();
+          Object.defineProperty(img, 'src', {
+            get: () => _src,
+            set: (value: string) => {
+              _src = value;
+              setTimeout(() => {
+                const event = new Event('load');
+                if (_onload) _onload(event);
+                if (listeners['load']) {
+                  listeners['load'].forEach((fn) => fn(event));
+                }
+              }, 0);
+            },
+          });
 
+          return img;
+        }) as unknown as typeof Image;
+      };
+
+      createComplexMockImage();
+
+      const originalCreateElement = document.createElement.bind(document);
       const mockCanvas = {
         getContext: vi.fn().mockReturnValue({
           drawImage: vi.fn(),
@@ -565,7 +481,6 @@ describe('PDF Utilities', () => {
         height: 100,
       };
 
-      // Mock createElement without recursion
       const createElementSpy = vi
         .spyOn(document, 'createElement')
         .mockImplementation((tag: any) => {
@@ -578,11 +493,8 @@ describe('PDF Utilities', () => {
       const mergedPdf = await mergePdfFiles([pdfFile, imageFile]);
       expect(mergedPdf.numPages).toBe(2); // 1 page from PDF + 1 page from image
 
-      // Cleanup: restore original implementations
       createElementSpy.mockRestore();
-      global.Image = originalImage;
-      global.URL.createObjectURL = originalCreateObjectURL;
-      global.URL.revokeObjectURL = originalRevokeObjectURL;
+      cleanupImageMocks(mockSetup);
     });
   });
 });
