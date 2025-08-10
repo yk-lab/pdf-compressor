@@ -132,7 +132,13 @@ describe('MainArea.vue - mergeAndCompressPDF', () => {
     vi.spyOn(crypto, 'randomUUID').mockImplementation(() => 'test-uuid');
 
     // Setup default mock returns
-    vi.mocked(pdfUtils.mergePdfFiles).mockResolvedValue(new ArrayBuffer(100));
+    // Create a mock PDFDocumentProxy
+    const mockPdfDocument = {
+      numPages: 1,
+      getPage: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof pdfUtils.mergePdfFiles>>;
+
+    vi.mocked(pdfUtils.mergePdfFiles).mockResolvedValue(mockPdfDocument);
     vi.mocked(pdfUtils.renderPdfToCanvases).mockResolvedValue([document.createElement('canvas')]);
     vi.mocked(pdfUtils.createCompressedPdfFromImages).mockResolvedValue(new Uint8Array(1000));
     vi.mocked(fileUtils.getGeneratedPDFOutputFileName).mockReturnValue('output.pdf');
