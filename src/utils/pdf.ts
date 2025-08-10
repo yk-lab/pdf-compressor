@@ -15,7 +15,7 @@ export class PDFCompressionSizeError extends Error {
  * @param file File
  * @return PDF かどうか
  */
-const isPdf = (file: File): boolean => {
+export const isPdf = (file: File): boolean => {
   return file.type === 'application/pdf';
 };
 
@@ -23,8 +23,8 @@ const isPdf = (file: File): boolean => {
  * @param file File
  * @return 画像かどうか
  */
-const supportedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const isImage = (file: File): boolean => supportedImageTypes.has(file.type);
+export const supportedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+export const isImage = (file: File): boolean => supportedImageTypes.has(file.type);
 
 /* PDFファイルをCanvasに描画する関数
  * @param pdf PDFDocumentProxy
@@ -129,7 +129,7 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
  * @param file 画像ファイル
  * @return 描画したCanvas
  */
-async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
+export async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);

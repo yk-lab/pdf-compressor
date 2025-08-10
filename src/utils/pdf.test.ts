@@ -7,17 +7,13 @@ import {
   mergePdfFiles,
   createCompressedPdfFromImages,
   PDFCompressionSizeError,
+  isPdf,
+  isImage,
+  loadImageToCanvas,
 } from './pdf';
 import { PDFDocument, StandardFonts, rgb, PDFPage } from 'pdf-lib';
 
 // Helper functions for testing
-const isPdf = (file: File): boolean => {
-  return file.type === 'application/pdf';
-};
-
-const supportedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const isImage = (file: File): boolean => supportedImageTypes.has(file.type);
-
 const createPage = async (pdfDoc: PDFDocument): Promise<PDFPage> => {
   const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
   const page = pdfDoc.addPage([600, 400]);
@@ -39,41 +35,6 @@ const generateArrayBuffer = async (data: Uint8Array) => {
   uint8Array.set(data);
   return arrayBuffer;
 };
-
-// loadImageToCanvas for testing
-async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        URL.revokeObjectURL(url);
-        reject(new Error('Failed to get canvas context'));
-        return;
-      }
-
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0);
-
-      URL.revokeObjectURL(url);
-      resolve(canvas);
-    };
-
-    img.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error('Failed to load image'));
-    };
-
-    img.src = url;
-  });
-}
 
 describe('PDF Utilities', () => {
   describe('loadImageToCanvas', () => {
