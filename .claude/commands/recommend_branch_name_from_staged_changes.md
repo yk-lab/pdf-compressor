@@ -15,10 +15,8 @@ This command analyzes staged changes and suggests appropriate branch names follo
 
 ## Commands
 
-- View staged changes: !`git diff --cached --stat`
-- Detailed staged diff: !`git diff --cached`
-- List staged files: !`git diff --cached --name-only`
-
+Current branch: !`git branch --show-current`
+Short status: !`git status -sb`
 ## Branch Naming Conventions
 
 - **feature/**: New features or enhancements
