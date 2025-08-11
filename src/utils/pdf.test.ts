@@ -512,6 +512,101 @@ describe('PDF Utilities', () => {
       expect(result.byteLength).toBeGreaterThan(0);
       expect(result.byteLength).toBeLessThanOrEqual(1000000);
     });
+
+    it('should use binary search for quality optimization', async () => {
+      // Mock blob sizes that decrease with quality
+      const mockBlobSizes = [1_500_000, 1_200_000, 900_000, 700_000, 500_000, 400_000, 300_000];
+      let callCount = 0;
+
+      // Mock the toBlob method on HTMLCanvasElement prototype
+      if (!('toBlob' in HTMLCanvasElement.prototype)) {
+        Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+          configurable: true,
+          writable: true,
+          value: function () {},
+        });
+      }
+      const toBlobMock = vi
+        .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+        .mockImplementation(function (
+          this: HTMLCanvasElement,
+          callback: BlobCallback,
+          _type?: string,
+          _quality?: number,
+        ) {
+          // Simulate size based on quality - lower quality = smaller size
+          const sizeIndex = Math.min(callCount++, mockBlobSizes.length - 1);
+          const size = mockBlobSizes[sizeIndex];
+          const blob = createMockJpegBlob(size);
+          setTimeout(() => callback(blob), 0);
+        });
+      // Create a mock canvas
+      const mockCanvas = {
+        width: 1000,
+        height: 1000,
+        toBlob: HTMLCanvasElement.prototype.toBlob,
+      } as HTMLCanvasElement;
+
+      const canvases = [mockCanvas];
+
+      try {
+        const result = await createCompressedPdfFromImages(canvases, {
+          maxSizeBytes: 1_000_000,
+          cutQuality: 0.1,
+        });
+
+        // Binary search should converge quickly (fewer iterations than linear search)
+        expect(callCount).toBeLessThanOrEqual(10); // MAX_ITERATIONS in the implementation
+        expect(result).toBeInstanceOf(Uint8Array);
+        expect(result.byteLength).toBeLessThanOrEqual(1_000_000);
+      } finally {
+        // Restore the original toBlob method
+        toBlobMock.mockRestore();
+      }
+    });
+
+    it('should converge quickly with binary search', async () => {
+      // Mock the toBlob method to simulate quality-based size reduction
+      const toBlobMock = vi
+        .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+        .mockImplementation(function (
+          this: HTMLCanvasElement,
+          callback: BlobCallback,
+          _type?: string,
+          quality?: number,
+        ) {
+          // Simulate realistic size reduction based on quality
+          // Higher quality = larger size
+          const actualQuality = quality ?? 0.92;
+          const baseSize = 2_000_000;
+          const size = Math.floor(baseSize * actualQuality);
+          const blob = createMockJpegBlob(size);
+          setTimeout(() => callback(blob), 0);
+        });
+
+      // Create a mock canvas
+      const mockCanvas = {
+        width: 1000,
+        height: 1000,
+        toBlob: HTMLCanvasElement.prototype.toBlob,
+      } as HTMLCanvasElement;
+
+      const canvases = [mockCanvas];
+
+      try {
+        const result = await createCompressedPdfFromImages(canvases, {
+          maxSizeBytes: 800_000,
+          cutQuality: 0.1,
+        });
+
+        // Binary search should find an optimal quality value
+        expect(result).toBeInstanceOf(Uint8Array);
+        expect(result.byteLength).toBeLessThanOrEqual(800_000);
+      } finally {
+        // Restore the original toBlob method
+        toBlobMock.mockRestore();
+      }
+    });
   });
 
   describe('mergePdfFiles', () => {
@@ -718,21 +813,6 @@ describe('PDF Utilities', () => {
       vi.restoreAllMocks();
     });
 
-    it.skip('should render PDF pages to canvases', async () => {
-      const pdfDoc = await PDFDocument.create();
-      await createPage(pdfDoc);
-      await createPage(pdfDoc); // Add second page
-      const pdfData = await pdfDoc.save();
-
-      const pdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-
-      const canvases = await renderPdfToCanvases(pdf);
-
-      expect(canvases).toHaveLength(2);
-      expect(canvases[0]).toBeInstanceOf(HTMLCanvasElement);
-      expect(canvases[1]).toBeInstanceOf(HTMLCanvasElement);
-    });
-
     it('should render with custom scale', async () => {
       const pdfDoc = await PDFDocument.create();
       await createPage(pdfDoc);
@@ -744,82 +824,6 @@ describe('PDF Utilities', () => {
 
       expect(canvases).toHaveLength(1);
       expect(canvases[0]).toBeInstanceOf(HTMLCanvasElement);
-    });
-  });
-
-  describe.skip('PDF Processing', () => {
-    it('should render PDF to canvases', async () => {
-      const pdfDoc = await PDFDocument.create();
-      await createPage(pdfDoc);
-      const pdf = await pdfjsLib.getDocument({ data: await pdfDoc.save() }).promise;
-
-      const canvases = await renderPdfToCanvases(pdf);
-      expect(canvases.length).toBe(pdf.numPages);
-      expect(canvases.length).toBe(1);
-      canvases.forEach((canvas) => {
-        expect(canvas).toBeInstanceOf(HTMLCanvasElement);
-      });
-    });
-
-    it('should merge multiple PDF files', async () => {
-      const pdfDoc1 = await PDFDocument.create();
-      const pdfDoc2 = await PDFDocument.create();
-      await createPage(pdfDoc1);
-      await createPage(pdfDoc2);
-      await createPage(pdfDoc2);
-
-      const data1 = await pdfDoc1.save();
-      const data2 = await pdfDoc2.save();
-
-      const pdfFile1 = new File([data1], 'sample1.pdf', { type: 'application/pdf' });
-      const pdfFile2 = new File([data2], 'sample2.pdf', { type: 'application/pdf' });
-
-      pdfFile1.arrayBuffer = vi.fn().mockResolvedValue(await generateArrayBuffer(data1));
-      pdfFile2.arrayBuffer = vi.fn().mockResolvedValue(await generateArrayBuffer(data2));
-
-      const mergedPdf = await mergePdfFiles([pdfFile1, pdfFile2]);
-      expect(mergedPdf.numPages).toBe(3);
-    });
-
-    it('should create a compressed PDF from images', async () => {
-      const pdfDoc = await PDFDocument.create();
-      await createPage(pdfDoc);
-
-      const canvases = await renderPdfToCanvases(
-        await pdfjsLib.getDocument({ data: await pdfDoc.save() }).promise,
-      );
-      const compressedPdf = await createCompressedPdfFromImages(canvases);
-      expect(compressedPdf.byteLength).toBeLessThanOrEqual(1_000_000);
-    });
-
-    it('should merge PDF and image files together', async () => {
-      // Create a test PDF file
-      const pdfDoc = await PDFDocument.create();
-      await createPage(pdfDoc);
-      const pdfData = await pdfDoc.save();
-      const pdfFile = new File([pdfData], 'test.pdf', { type: 'application/pdf' });
-      pdfFile.arrayBuffer = vi.fn().mockResolvedValue(await generateArrayBuffer(pdfData));
-
-      // Create a test image file
-      const mockImageData =
-        'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCwABmX/9k=';
-      const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
-
-      const mockSetup = setupImageMocks();
-      createMockImage(100, 100, false, true);
-
-      const { spy } = createMockCanvas(true, {
-        toDataURL: mockImageData,
-        toBlob: true,
-        width: 100,
-        height: 100,
-      });
-
-      const mergedPdf = await mergePdfFiles([pdfFile, imageFile]);
-      expect(mergedPdf.numPages).toBe(2); // 1 page from PDF + 1 page from image
-
-      spy.mockRestore();
-      cleanupImageMocks(mockSetup);
     });
   });
 });

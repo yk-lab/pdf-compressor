@@ -220,9 +220,29 @@ export async function createCompressedPdfFromImages(
     cutQuality?: number;
   } = {},
 ): Promise<Uint8Array> {
-  let quality = 1.0;
+  // 二分探索のパラメータ
+  let low = cutQuality;
+  let high = 1.0;
+  let bestQuality: number | null = null;
+  let bestPdf: Uint8Array | null = null;
+  const MAX_ITERATIONS = 10;
+  const CONVERGENCE_THRESHOLD = 0.01;
+  const NEAR_OPTIMAL_RATIO = 0.95;
 
-  while (quality >= cutQuality) {
+  // デバッグ用ログ（開発時のみ）
+  const debugLog = (message: string) => {
+    if (import.meta.env.DEV) {
+      console.log(`[PDF Compression] ${message}`);
+    }
+  };
+
+  debugLog(`Starting binary search: target size = ${maxSizeBytes} bytes`);
+
+  for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
+    const quality = (low + high) / 2;
+    debugLog(`Iteration ${iteration + 1}: trying quality = ${quality.toFixed(3)}`);
+
+    // 現在の品質でPDFを生成
     const pdfDoc = await PDFDocument.create();
     for (const canvas of pages) {
       const blob = await canvasToJpegBlob(canvas, quality);
@@ -233,14 +253,47 @@ export async function createCompressedPdfFromImages(
     }
 
     const outBytes = await pdfDoc.save();
-    if (outBytes.byteLength <= maxSizeBytes) {
-      return outBytes;
+    const currentSize = outBytes.byteLength;
+    debugLog(`  Generated PDF size: ${currentSize} bytes`);
+
+    if (currentSize <= maxSizeBytes) {
+      // 目標サイズ以下の場合、これを最良の結果として保存
+      bestQuality = quality;
+      bestPdf = outBytes;
+      debugLog(`  ✓ Within target size, trying higher quality`);
+
+      // より高品質を試す
+      low = quality;
+
+      // 最適解が見つかった場合（サイズが目標に非常に近い場合）
+      if (currentSize > maxSizeBytes * NEAR_OPTIMAL_RATIO) {
+        debugLog(
+          `  Found near-optimal solution (${((currentSize / maxSizeBytes) * 100).toFixed(1)}% of target)`,
+        );
+        break;
+      }
     } else {
-      // サイズが大きければ品質を下げて再試行
-      quality -= 0.02;
+      // 目標サイズを超える場合、より低品質を試す
+      debugLog(`  ✗ Exceeds target size, trying lower quality`);
+      high = quality;
+    }
+
+    // 収束判定
+    if (Math.abs(high - low) < CONVERGENCE_THRESHOLD) {
+      debugLog(
+        `Converged after ${iteration + 1} iterations (quality range: ${low.toFixed(3)}-${high.toFixed(3)})`,
+      );
+      break;
     }
   }
 
+  // 最良の結果を返す
+  if (bestPdf !== null) {
+    debugLog(`Final quality: ${bestQuality!.toFixed(3)}, size: ${bestPdf.byteLength} bytes`);
+    return bestPdf;
+  }
+
   // 足切り品質でも制限以下にならなかった場合はエラー
+  debugLog(`Failed to compress within size limit even at minimum quality ${cutQuality}`);
   throw new PDFCompressionSizeError('Could not compress PDF under the given size limit.');
 }
