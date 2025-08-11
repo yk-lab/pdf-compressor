@@ -792,6 +792,61 @@ describe('PDF Utilities', () => {
       expect(compressedPdf.byteLength).toBeLessThanOrEqual(1_000_000);
     });
 
+    it('should use binary search for quality optimization', async () => {
+      const pdfDoc = await PDFDocument.create();
+      await createPage(pdfDoc);
+
+      const canvases = await renderPdfToCanvases(
+        await pdfjsLib.getDocument({ data: await pdfDoc.save() }).promise,
+      );
+
+      // モックのcanvasToJpegBlob関数をスパイ
+      const mockBlobSizes = [1_500_000, 1_200_000, 900_000, 700_000]; // 品質に応じてサイズが減少
+      let callCount = 0;
+
+      vi.spyOn(global, 'canvasToJpegBlob' as any).mockImplementation(
+        async (_canvas: any, _quality: any) => {
+          const size = mockBlobSizes[Math.min(callCount++, mockBlobSizes.length - 1)];
+          return new Blob(['x'.repeat(size)], { type: 'image/jpeg' });
+        },
+      );
+
+      const compressedPdf = await createCompressedPdfFromImages(canvases, {
+        maxSizeBytes: 1_000_000,
+        cutQuality: 0.1,
+      });
+
+      // 二分探索のため、線形探索よりも少ない試行回数であることを確認
+      expect(callCount).toBeLessThanOrEqual(10); // MAX_ITERATIONS
+      expect(compressedPdf.byteLength).toBeLessThanOrEqual(1_000_000);
+    });
+
+    it('should converge quickly with binary search', async () => {
+      const pdfDoc = await PDFDocument.create();
+      await createPage(pdfDoc);
+
+      const canvases = await renderPdfToCanvases(
+        await pdfjsLib.getDocument({ data: await pdfDoc.save() }).promise,
+      );
+
+      // 品質と生成されるサイズの関係をシミュレート
+      vi.spyOn(global, 'canvasToJpegBlob' as any).mockImplementation(
+        async (_canvas: any, quality: any) => {
+          // 品質が低いほどサイズが小さくなる
+          const size = Math.floor(2_000_000 * (quality as number));
+          return new Blob(['x'.repeat(size)], { type: 'image/jpeg' });
+        },
+      );
+
+      const compressedPdf = await createCompressedPdfFromImages(canvases, {
+        maxSizeBytes: 800_000,
+        cutQuality: 0.1,
+      });
+
+      // 二分探索により最適な品質が見つかることを確認
+      expect(compressedPdf.byteLength).toBeLessThanOrEqual(800_000);
+    });
+
     it('should merge PDF and image files together', async () => {
       // Create a test PDF file
       const pdfDoc = await PDFDocument.create();
