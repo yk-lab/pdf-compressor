@@ -375,15 +375,46 @@ describe('PDF Utilities', () => {
       cleanupImageMocks(mockSetup);
     });
 
-    it('should handle decode error', async () => {
+    it('should handle decode error gracefully with fallback', async () => {
       const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
 
       const mockSetup = setupImageMocks();
       createMockImage(200, 150, false, false, true); // decodeError = true
       createMockCanvas(true);
 
-      await expect(loadImageToCanvas(imageFile)).rejects.toThrow('Failed to process image');
+      // decode エラーがあっても処理は成功するはず（フォールバック動作）
+      const result = await loadImageToCanvas(imageFile);
+      expect(result).toBeDefined();
+      expect(result.width).toBe(200);
+      expect(result.height).toBe(150);
+      expect(result.getContext).toBeDefined();
       expect(global.URL.revokeObjectURL).toHaveBeenCalledWith('blob:test');
+
+      cleanupImageMocks(mockSetup);
+    });
+
+    it('should work without decode method (fallback for older browsers)', async () => {
+      const imageFile = new File(['image data'], 'test.jpg', { type: 'image/jpeg' });
+
+      const mockSetup = setupImageMocks();
+      // decode メソッドを持たない Image モック
+      (global as any).Image = vi.fn().mockImplementation(() => ({
+        width: 200,
+        height: 150,
+        onload: null,
+        onerror: null,
+        set src(_v: string) {
+          setTimeout(() => this.onload && this.onload(new Event('load')), 0);
+        },
+        // decode メソッドなし
+      })) as unknown as typeof Image;
+      createMockCanvas(true);
+
+      const result = await loadImageToCanvas(imageFile);
+      expect(result).toBeDefined();
+      expect(result.width).toBe(200);
+      expect(result.height).toBe(150);
+      expect(result.getContext).toBeDefined();
 
       cleanupImageMocks(mockSetup);
     });

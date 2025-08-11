@@ -11,6 +11,22 @@ export class PDFCompressionSizeError extends Error {
   }
 }
 
+/**
+ * Canvas を JPEG Blob に変換する共通ユーティリティ
+ * @param canvas 変換対象のCanvas
+ * @param quality JPEG品質 (0.0 - 1.0)
+ * @return JPEG Blob
+ */
+async function canvasToJpegBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return await new Promise((resolve, reject) =>
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error('Failed to encode JPEG'))),
+      'image/jpeg',
+      quality,
+    ),
+  );
+}
+
 /* File が PDF かどうかを判定する
  * @param file File
  * @return PDF かどうか
@@ -99,19 +115,10 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
 
       // 画像が1MBを超える場合は圧縮（正確なサイズ判定のため toBlob を使用）
       let quality = 1.0;
-      const toJpegBlob = async (q: number): Promise<Blob> =>
-        await new Promise((resolve, reject) =>
-          canvas.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error('Failed to encode JPEG'))),
-            'image/jpeg',
-            q,
-          ),
-        );
-
-      let blob = await toJpegBlob(quality);
+      let blob = await canvasToJpegBlob(canvas, quality);
       while (blob.size > 1_000_000 && quality > 0.1) {
         quality = Math.max(0.1, quality - 0.1);
-        blob = await toJpegBlob(quality);
+        blob = await canvasToJpegBlob(canvas, quality);
       }
 
       const jpgBytes = new Uint8Array(await blob.arrayBuffer());
@@ -147,8 +154,14 @@ export async function loadImageToCanvas(
 
     img.onload = async () => {
       try {
-        // デコード完了を待つ
-        await img.decode();
+        // デコード完了を待つ（未実装環境ではスキップ）
+        if ('decode' in img && typeof img.decode === 'function') {
+          try {
+            await img.decode();
+          } catch {
+            // onload は既に発火しているため、decode 失敗時も続行
+          }
+        }
 
         // 最大サイズ制限のチェック
         let width = img.width;
@@ -208,16 +221,6 @@ export async function createCompressedPdfFromImages(
   } = {},
 ): Promise<Uint8Array> {
   let quality = 1.0;
-
-  // Canvas を Blob に変換するヘルパー関数
-  const canvasToJpegBlob = async (canvas: HTMLCanvasElement, q: number): Promise<Blob> =>
-    await new Promise((resolve, reject) =>
-      canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error('Failed to encode JPEG'))),
-        'image/jpeg',
-        q,
-      ),
-    );
 
   while (quality >= cutQuality) {
     const pdfDoc = await PDFDocument.create();
