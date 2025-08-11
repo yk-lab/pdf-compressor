@@ -512,6 +512,95 @@ describe('PDF Utilities', () => {
       expect(result.byteLength).toBeGreaterThan(0);
       expect(result.byteLength).toBeLessThanOrEqual(1000000);
     });
+
+    it('should use binary search for quality optimization', async () => {
+      // Mock blob sizes that decrease with quality
+      const mockBlobSizes = [1_500_000, 1_200_000, 900_000, 700_000, 500_000, 400_000, 300_000];
+      let callCount = 0;
+
+      // Mock the toBlob method on HTMLCanvasElement prototype
+      const toBlobMock = vi
+        .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+        .mockImplementation(function (
+          this: HTMLCanvasElement,
+          callback: BlobCallback,
+          _type?: string,
+          _quality?: number,
+        ) {
+          // Simulate size based on quality - lower quality = smaller size
+          const sizeIndex = Math.min(callCount++, mockBlobSizes.length - 1);
+          const size = mockBlobSizes[sizeIndex];
+          const blob = createMockJpegBlob(size);
+          setTimeout(() => callback(blob), 0);
+        });
+
+      // Create a mock canvas
+      const mockCanvas = {
+        width: 1000,
+        height: 1000,
+        toBlob: HTMLCanvasElement.prototype.toBlob,
+      } as HTMLCanvasElement;
+
+      const canvases = [mockCanvas];
+
+      try {
+        const result = await createCompressedPdfFromImages(canvases, {
+          maxSizeBytes: 1_000_000,
+          cutQuality: 0.1,
+        });
+
+        // Binary search should converge quickly (fewer iterations than linear search)
+        expect(callCount).toBeLessThanOrEqual(10); // MAX_ITERATIONS in the implementation
+        expect(result).toBeInstanceOf(Uint8Array);
+        expect(result.byteLength).toBeLessThanOrEqual(1_000_000);
+      } finally {
+        // Restore the original toBlob method
+        toBlobMock.mockRestore();
+      }
+    });
+
+    it('should converge quickly with binary search', async () => {
+      // Mock the toBlob method to simulate quality-based size reduction
+      const toBlobMock = vi
+        .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+        .mockImplementation(function (
+          this: HTMLCanvasElement,
+          callback: BlobCallback,
+          _type?: string,
+          quality?: number,
+        ) {
+          // Simulate realistic size reduction based on quality
+          // Higher quality = larger size
+          const actualQuality = quality ?? 0.92;
+          const baseSize = 2_000_000;
+          const size = Math.floor(baseSize * actualQuality);
+          const blob = createMockJpegBlob(size);
+          setTimeout(() => callback(blob), 0);
+        });
+
+      // Create a mock canvas
+      const mockCanvas = {
+        width: 1000,
+        height: 1000,
+        toBlob: HTMLCanvasElement.prototype.toBlob,
+      } as HTMLCanvasElement;
+
+      const canvases = [mockCanvas];
+
+      try {
+        const result = await createCompressedPdfFromImages(canvases, {
+          maxSizeBytes: 800_000,
+          cutQuality: 0.1,
+        });
+
+        // Binary search should find an optimal quality value
+        expect(result).toBeInstanceOf(Uint8Array);
+        expect(result.byteLength).toBeLessThanOrEqual(800_000);
+      } finally {
+        // Restore the original toBlob method
+        toBlobMock.mockRestore();
+      }
+    });
   });
 
   describe('mergePdfFiles', () => {
