@@ -97,18 +97,25 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
       // 画像ファイルの場合
       const canvas = await loadImageToCanvas(file);
 
-      // 画像が1MBを超える場合は圧縮
+      // 画像が1MBを超える場合は圧縮（正確なサイズ判定のため toBlob を使用）
       let quality = 1.0;
-      let imageData = canvas.toDataURL('image/jpeg', quality);
-      let imageSize = imageData.length * 0.75; // Base64のサイズから実際のバイト数を推定
+      const toJpegBlob = async (q: number): Promise<Blob> =>
+        await new Promise((resolve, reject) =>
+          canvas.toBlob(
+            (b) => (b ? resolve(b) : reject(new Error('Failed to encode JPEG'))),
+            'image/jpeg',
+            q,
+          ),
+        );
 
-      while (imageSize > 1_000_000 && quality > 0.1) {
-        quality -= 0.1;
-        imageData = canvas.toDataURL('image/jpeg', quality);
-        imageSize = imageData.length * 0.75;
+      let blob = await toJpegBlob(quality);
+      while (blob.size > 1_000_000 && quality > 0.1) {
+        quality = Math.max(0.1, quality - 0.1);
+        blob = await toJpegBlob(quality);
       }
 
-      const jpgImage = await mergedPdf.embedJpg(imageData);
+      const jpgBytes = new Uint8Array(await blob.arrayBuffer());
+      const jpgImage = await mergedPdf.embedJpg(jpgBytes);
       const page = mergedPdf.addPage([jpgImage.width, jpgImage.height]);
       page.drawImage(jpgImage, { x: 0, y: 0, width: jpgImage.width, height: jpgImage.height });
     } else {
@@ -127,34 +134,58 @@ export const mergePdfFiles = async (files: File[]): Promise<PDFDocumentProxy> =>
  */
 /* 画像ファイルをCanvasに読み込む関数
  * @param file 画像ファイル
+ * @param maxPixels 最大ピクセル数（デフォルト: 4096x4096）
  * @return 描画したCanvas
  */
-export async function loadImageToCanvas(file: File): Promise<HTMLCanvasElement> {
+export async function loadImageToCanvas(
+  file: File,
+  maxPixels = 4096 * 4096,
+): Promise<HTMLCanvasElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     const url = URL.createObjectURL(file);
 
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
+    img.onload = async () => {
+      try {
+        // デコード完了を待つ
+        await img.decode();
+
+        // 最大サイズ制限のチェック
+        let width = img.width;
+        let height = img.height;
+        const currentPixels = width * height;
+
+        if (currentPixels > maxPixels) {
+          // 縦横比を維持しながらリサイズ
+          const scale = Math.sqrt(maxPixels / currentPixels);
+          width = Math.floor(width * scale);
+          height = Math.floor(height * scale);
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          reject(new Error('Failed to get canvas context'));
+          return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // 透過画像の場合のために白い背景を先に描画
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // その上に画像を描画（リサイズが必要な場合は縮小）
+        ctx.drawImage(img, 0, 0, width, height);
+
         URL.revokeObjectURL(url);
-        reject(new Error('Failed to get canvas context'));
-        return;
+        resolve(canvas);
+      } catch (error) {
+        URL.revokeObjectURL(url);
+        reject(new Error(`Failed to process image: ${error}`));
       }
-
-      canvas.width = img.width;
-      canvas.height = img.height;
-
-      // 透過画像の場合のために白い背景を先に描画
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // その上に画像を描画
-      ctx.drawImage(img, 0, 0);
-
-      URL.revokeObjectURL(url);
-      resolve(canvas);
     };
 
     img.onerror = () => {
@@ -178,10 +209,22 @@ export async function createCompressedPdfFromImages(
 ): Promise<Uint8Array> {
   let quality = 1.0;
 
+  // Canvas を Blob に変換するヘルパー関数
+  const canvasToJpegBlob = async (canvas: HTMLCanvasElement, q: number): Promise<Blob> =>
+    await new Promise((resolve, reject) =>
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('Failed to encode JPEG'))),
+        'image/jpeg',
+        q,
+      ),
+    );
+
   while (quality >= cutQuality) {
     const pdfDoc = await PDFDocument.create();
     for (const canvas of pages) {
-      const jpgImage = await pdfDoc.embedJpg(canvas.toDataURL('image/jpeg', quality));
+      const blob = await canvasToJpegBlob(canvas, quality);
+      const jpgBytes = new Uint8Array(await blob.arrayBuffer());
+      const jpgImage = await pdfDoc.embedJpg(jpgBytes);
       const page = pdfDoc.addPage([jpgImage.width, jpgImage.height]);
       page.drawImage(jpgImage, { x: 0, y: 0, width: jpgImage.width, height: jpgImage.height });
     }
