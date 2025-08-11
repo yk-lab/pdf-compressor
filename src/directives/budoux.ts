@@ -16,6 +16,10 @@ const applyBudoux = async (el: HTMLElement) => {
   const text = el.textContent ?? '';
   const lastProcessedText = el.dataset.budouxText;
 
+  // リクエスト順制御（レースコンディション防止）
+  const seq = String((parseInt(el.dataset.budouxSeq ?? '0', 10) || 0) + 1);
+  el.dataset.budouxSeq = seq;
+
   // Skip if text hasn't changed
   if (text === lastProcessedText) {
     return;
@@ -25,6 +29,10 @@ const applyBudoux = async (el: HTMLElement) => {
     const parser = await getParser();
 
     const html = parser.translateHTMLString(text);
+
+    // 最新の処理でなければ中断
+    if (el.dataset.budouxSeq !== seq) return;
+
     el.innerHTML = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['wbr'],
       ALLOWED_ATTR: [], // Explicitly disallow all attributes
