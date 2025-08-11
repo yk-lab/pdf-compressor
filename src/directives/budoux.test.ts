@@ -101,7 +101,7 @@ describe('budoux directive', () => {
       const el = document.createElement('div');
       el.textContent = 'エラーテスト';
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
       mockLoadDefaultJapaneseParser.mockRejectedValue(new Error('Parser load failed'));
 
       await budouxDirective.mounted(el);
@@ -109,19 +109,6 @@ describe('budoux directive', () => {
       expect(consoleErrorSpy).toHaveBeenCalledWith('Error applying Budoux:', expect.any(Error));
       expect(el.textContent).toBe('エラーテスト');
       expect(el.dataset.budouxText).toBeUndefined();
-    });
-
-    it('should handle null parser gracefully', async () => {
-      const el = document.createElement('div');
-      el.textContent = 'Nullパーサーテスト';
-
-      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      mockLoadDefaultJapaneseParser.mockResolvedValue(null);
-
-      await budouxDirective.mounted(el);
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith('BudouX parser is not available');
-      expect(el.textContent).toBe('Nullパーサーテスト');
     });
 
     it('should skip CSS properties when not supported', async () => {
@@ -181,7 +168,7 @@ describe('budoux directive', () => {
       const el1 = document.createElement('div');
       el1.textContent = '最初のテキスト';
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
       // First call fails
       mockLoadDefaultJapaneseParser.mockRejectedValueOnce(new Error('First load failed'));
@@ -247,7 +234,7 @@ describe('budoux directive', () => {
         throw new Error('Translation failed');
       });
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
 
       await budouxDirective.mounted(el);
 

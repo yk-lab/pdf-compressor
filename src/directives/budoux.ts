@@ -1,12 +1,13 @@
 import DOMPurify from 'dompurify';
 import { loadDefaultJapaneseParser } from 'budoux';
-import type { ObjectDirective } from 'vue';
-
+/**
+ * Budoux directive for Vue.js to handle Japanese text segmentation.
+ * This directive applies BudouX processing to the text content of an element,
+ * ensuring proper line breaks and word wrapping for Japanese text.
+ */
 let parserPromise: ReturnType<typeof loadDefaultJapaneseParser> | undefined;
 const getParser = async () => {
-  if (!parserPromise) {
-    parserPromise = loadDefaultJapaneseParser();
-  }
+  parserPromise ??= loadDefaultJapaneseParser();
   return parserPromise;
 };
 
@@ -22,10 +23,7 @@ const applyBudoux = async (el: HTMLElement) => {
 
   try {
     const parser = await getParser();
-    if (!parser) {
-      console.warn('BudouX parser is not available');
-      return;
-    }
+
     const html = parser.translateHTMLString(text);
     el.innerHTML = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['wbr'],
@@ -57,4 +55,4 @@ export default {
   async updated(el: HTMLElement) {
     await applyBudoux(el);
   },
-} satisfies ObjectDirective<HTMLElement, Promise<void>>;
+};
