@@ -1,7 +1,30 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-import { mount } from '@vue/test-utils';
+import { mount, flushPromises } from '@vue/test-utils';
 import MainArea from '@/components/MainArea.vue';
+import * as pdfUtils from '@/utils/pdf';
+import * as fileUtils from '@/utils/file';
+
+// Mock PDF.js
+vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: { workerSrc: '' },
+}));
+
+// Mock worker URL
+vi.mock('pdfjs-dist/build/pdf.worker.mjs?url', () => ({
+  default: 'mock-worker-url',
+}));
+
+// Mock the utils
+vi.mock('@/utils/pdf', () => ({
+  mergePdfFiles: vi.fn(),
+  renderPdfToCanvases: vi.fn(),
+  createCompressedPdfFromImages: vi.fn(),
+}));
+
+vi.mock('@/utils/file', () => ({
+  getGeneratedPDFOutputFileName: vi.fn(),
+}));
 
 describe('MainArea', () => {
   it('renders properly', () => {
@@ -11,18 +34,36 @@ describe('MainArea', () => {
 });
 
 describe('MainArea.vue - addFiles', () => {
-  const mockUUID = 'test-uuid';
+  let uuidCounter = 0;
+  let originalRevokeObjectURL: typeof URL.revokeObjectURL | undefined;
 
   beforeEach(() => {
-    global.URL.revokeObjectURL = vi.fn();
+    // Reset UUID counter
+    uuidCounter = 0;
 
-    // Mock crypto.randomUUID
+    // Ensure URL methods exist before mocking
+    if (!global.URL) {
+      global.URL = {} as typeof URL;
+    }
+    if (!global.URL.revokeObjectURL) {
+      global.URL.revokeObjectURL = () => {};
+    }
+
+    // Save original before spying
+    originalRevokeObjectURL = global.URL.revokeObjectURL;
+    vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(() => undefined);
+
+    // Mock crypto.randomUUID to return unique values
     // @ts-expect-error: Mocking randomUUID
-    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => mockUUID);
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => `uuid-${++uuidCounter}`);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
+    // Restore global functions
+    if (originalRevokeObjectURL) {
+      global.URL.revokeObjectURL = originalRevokeObjectURL;
+    }
   });
 
   it('should handle empty files array', async () => {
@@ -31,31 +72,58 @@ describe('MainArea.vue - addFiles', () => {
     expect(wrapper.vm.pdfFiles).toHaveLength(0);
   });
 
-  it('should add only PDF files to pdfFiles', async () => {
+  it('should add PDF and image files to pdfFiles', async () => {
     const wrapper = mount(MainArea);
     const files = [
       new File([''], 'test.pdf', { type: 'application/pdf' }),
-      new File([''], 'test.txt', { type: 'text/plain' }),
       new File([''], 'test2.pdf', { type: 'application/pdf' }),
+      new File([''], 'test.jpg', { type: 'image/jpeg' }),
+      new File([''], 'test.png', { type: 'image/png' }),
+      new File([''], 'test.webp', { type: 'image/webp' }),
+      new File([''], 'test.gif', { type: 'image/gif' }),
     ];
 
     wrapper.vm.addFiles(files);
 
     const pdfFiles = wrapper.vm.pdfFiles;
-    expect(pdfFiles).toHaveLength(2);
+    expect(pdfFiles).toHaveLength(6);
+    expect(crypto.randomUUID).toHaveBeenCalledTimes(6);
+
     expect(pdfFiles[0]).toEqual({
-      id: 'test-uuid',
+      id: expect.any(String),
       file: expect.objectContaining({
         name: 'test.pdf',
         type: 'application/pdf',
       }),
     });
     expect(pdfFiles[1]).toEqual({
-      id: 'test-uuid',
+      id: expect.any(String),
       file: expect.objectContaining({
         name: 'test2.pdf',
         type: 'application/pdf',
       }),
+    });
+    expect(pdfFiles[2]).toEqual({
+      id: expect.any(String),
+      file: expect.objectContaining({
+        name: 'test.jpg',
+        type: 'image/jpeg',
+      }),
+    });
+    expect(pdfFiles[3]).toEqual({
+      id: expect.any(String),
+      file: expect.objectContaining({
+        name: 'test.png',
+        type: 'image/png',
+      }),
+    });
+    expect(pdfFiles[4]).toEqual({
+      id: expect.any(String),
+      file: expect.objectContaining({ name: 'test.webp', type: 'image/webp' }),
+    });
+    expect(pdfFiles[5]).toEqual({
+      id: expect.any(String),
+      file: expect.objectContaining({ name: 'test.gif', type: 'image/gif' }),
     });
   });
 
@@ -68,11 +136,186 @@ describe('MainArea.vue - addFiles', () => {
 
     const files = [new File([''], 'test.pdf', { type: 'application/pdf' })];
 
-    wrapper.vm.addFiles(files);
+    await wrapper.vm.addFiles(files);
 
     // @ts-expect-error: accessing private refs
     expect(wrapper.vm.compressedPDF).toBeNull();
     // @ts-expect-error: accessing private ref
     expect(wrapper.vm.fileSize).toBe(0);
+  });
+});
+
+describe('MainArea.vue - mergeAndCompressPDF', () => {
+  let mockCreateObjectURL: typeof URL.createObjectURL;
+  let mockRevokeObjectURL: typeof URL.revokeObjectURL;
+  const mockObjectURL = 'blob:mock-url';
+  let uuidCounter = 0;
+  let originalCreateObjectURL: typeof URL.createObjectURL | undefined;
+  let originalRevokeObjectURL: typeof URL.revokeObjectURL | undefined;
+
+  beforeEach(() => {
+    // Reset UUID counter
+    uuidCounter = 0;
+
+    // Ensure URL methods exist before mocking
+    if (!global.URL) {
+      global.URL = {} as typeof URL;
+    }
+    if (!global.URL.createObjectURL) {
+      global.URL.createObjectURL = () => '';
+    }
+    if (!global.URL.revokeObjectURL) {
+      global.URL.revokeObjectURL = () => {};
+    }
+
+    // Save originals before spying
+    originalCreateObjectURL = global.URL.createObjectURL;
+    originalRevokeObjectURL = global.URL.revokeObjectURL;
+
+    // Mock URL methods
+    mockCreateObjectURL = vi.fn().mockReturnValue(mockObjectURL);
+    mockRevokeObjectURL = vi.fn();
+    vi.spyOn(global.URL, 'createObjectURL').mockImplementation(
+      mockCreateObjectURL as unknown as typeof URL.createObjectURL,
+    );
+    vi.spyOn(global.URL, 'revokeObjectURL').mockImplementation(
+      mockRevokeObjectURL as unknown as typeof URL.revokeObjectURL,
+    );
+
+    // Mock crypto.randomUUID to return unique values
+    // @ts-expect-error: Mocking randomUUID
+    vi.spyOn(crypto, 'randomUUID').mockImplementation(() => `uuid-${++uuidCounter}`);
+
+    // Setup default mock returns
+    // Create a mock PDFDocumentProxy
+    const mockPdfDocument = {
+      numPages: 1,
+      getPage: vi.fn(),
+    } as unknown as Awaited<ReturnType<typeof pdfUtils.mergePdfFiles>>;
+
+    vi.mocked(pdfUtils.mergePdfFiles).mockResolvedValue(mockPdfDocument);
+    vi.mocked(pdfUtils.renderPdfToCanvases).mockResolvedValue([document.createElement('canvas')]);
+    vi.mocked(pdfUtils.createCompressedPdfFromImages).mockResolvedValue(new Uint8Array(1000));
+    vi.mocked(fileUtils.getGeneratedPDFOutputFileName).mockReturnValue('output.pdf');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    // Restore global functions
+    if (originalCreateObjectURL) {
+      global.URL.createObjectURL = originalCreateObjectURL;
+    }
+    if (originalRevokeObjectURL) {
+      global.URL.revokeObjectURL = originalRevokeObjectURL;
+    }
+  });
+
+  it('should handle files successfully and generate compressed PDF', async () => {
+    const wrapper = mount(MainArea);
+    const files = [
+      new File(['content1'], 'test1.pdf', { type: 'application/pdf' }),
+      new File(['content2'], 'test2.pdf', { type: 'application/pdf' }),
+    ];
+
+    // Add files first
+    await wrapper.vm.addFiles(files);
+
+    // Call the method directly instead of clicking button
+    // @ts-expect-error: accessing private method
+    await wrapper.vm.mergeAndCompressPDF();
+    await flushPromises();
+
+    // Verify the PDF processing functions were called
+    expect(pdfUtils.mergePdfFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'test1.pdf', type: 'application/pdf' }),
+        expect.objectContaining({ name: 'test2.pdf', type: 'application/pdf' }),
+      ]),
+    );
+    // Verify mergePdfFiles result is passed to renderPdfToCanvases
+    expect(pdfUtils.renderPdfToCanvases).toHaveBeenCalledWith(
+      expect.objectContaining({ numPages: 1 }),
+    );
+    expect(pdfUtils.createCompressedPdfFromImages).toHaveBeenCalledWith(
+      [expect.any(HTMLCanvasElement)],
+      expect.objectContaining({ maxSizeBytes: expect.any(Number) }),
+    );
+
+    // Verify the blob was created
+    expect(mockCreateObjectURL).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'application/pdf' }),
+    );
+
+    // Verify the download filename was set
+    expect(fileUtils.getGeneratedPDFOutputFileName).toHaveBeenCalled();
+
+    // @ts-expect-error: accessing private ref
+    expect(wrapper.vm.compressedPDF).toBe(mockObjectURL);
+    // @ts-expect-error: accessing private ref
+    expect(wrapper.vm.fileSize).toBe(1000);
+    // @ts-expect-error: accessing private ref
+    expect(wrapper.vm.downloadFileName).toBe('output.pdf');
+  });
+
+  it('should handle errors during PDF processing', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const testError = new Error('Processing failed');
+    vi.mocked(pdfUtils.mergePdfFiles).mockRejectedValue(testError);
+
+    const wrapper = mount(MainArea);
+    const files = [new File(['content'], 'test.pdf', { type: 'application/pdf' })];
+
+    // Add files
+    await wrapper.vm.addFiles(files);
+
+    // Call the method directly instead of clicking button
+    // @ts-expect-error: accessing private method
+    await wrapper.vm.mergeAndCompressPDF();
+    await flushPromises();
+
+    // Verify error was logged
+    expect(consoleErrorSpy).toHaveBeenCalledWith(testError);
+
+    // Verify no PDF was created
+    // @ts-expect-error: accessing private ref
+    expect(wrapper.vm.compressedPDF).toBeNull();
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it('should reset compressed PDF when pdfFiles change', async () => {
+    const wrapper = mount(MainArea);
+
+    // Set up initial compressed PDF state
+    // @ts-expect-error: accessing private ref
+    wrapper.vm.compressedPDF = mockObjectURL;
+    // @ts-expect-error: accessing private ref
+    wrapper.vm.fileSize = 1000;
+
+    // Add a new file (which triggers the watcher)
+    const newFile = new File(['new'], 'new.pdf', { type: 'application/pdf' });
+    await wrapper.vm.addFiles([newFile]);
+    await flushPromises();
+
+    // Verify reset was called
+    expect(mockRevokeObjectURL).toHaveBeenCalledWith(mockObjectURL);
+    // @ts-expect-error: accessing private ref
+    expect(wrapper.vm.compressedPDF).toBeNull();
+    // @ts-expect-error: accessing private ref
+    expect(wrapper.vm.fileSize).toBe(0);
+  });
+
+  it('should clean up resources on unmount', async () => {
+    const wrapper = mount(MainArea);
+
+    // Set up compressed PDF
+    // @ts-expect-error: accessing private ref
+    wrapper.vm.compressedPDF = mockObjectURL;
+
+    // Unmount the component
+    wrapper.unmount();
+
+    // Verify cleanup was called
+    expect(mockRevokeObjectURL).toHaveBeenCalledWith(mockObjectURL);
   });
 });
