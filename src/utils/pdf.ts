@@ -227,10 +227,11 @@ export async function createCompressedPdfFromImages(
   let bestPdf: Uint8Array | null = null;
   const MAX_ITERATIONS = 10;
   const CONVERGENCE_THRESHOLD = 0.01;
+  const NEAR_OPTIMAL_RATIO = 0.95;
 
   // デバッグ用ログ（開発時のみ）
   const debugLog = (message: string) => {
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       console.log(`[PDF Compression] ${message}`);
     }
   };
@@ -265,7 +266,7 @@ export async function createCompressedPdfFromImages(
       low = quality;
 
       // 最適解が見つかった場合（サイズが目標に非常に近い場合）
-      if (currentSize > maxSizeBytes * 0.95) {
+      if (currentSize > maxSizeBytes * NEAR_OPTIMAL_RATIO) {
         debugLog(
           `  Found near-optimal solution (${((currentSize / maxSizeBytes) * 100).toFixed(1)}% of target)`,
         );

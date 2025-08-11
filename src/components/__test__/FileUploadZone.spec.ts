@@ -220,4 +220,52 @@ describe('FileUploadZone', () => {
     // Should show error for invalid file
     expect(wrapper.text()).toContain('サポートされていないファイル形式');
   });
+
+  it('clears error timer on component unmount', async () => {
+    const wrapper = mount(FileUploadZone);
+    const input = wrapper.find('input[type="file"]').element as HTMLInputElement;
+
+    // Add invalid file to show error and start timer
+    const txtFile = new File(['text'], 'test.txt', { type: 'text/plain' });
+    setInputFiles(input, [txtFile]);
+
+    input.dispatchEvent(new Event('change'));
+    await nextTick();
+
+    expect(wrapper.text()).toContain('サポートされていないファイル形式');
+
+    // Unmount the component
+    wrapper.unmount();
+
+    // Timer should be cleared (no error thrown)
+    vi.runAllTimers();
+  });
+
+  it('replaces error timer when new error occurs', async () => {
+    const wrapper = mount(FileUploadZone);
+    const input = wrapper.find('input[type="file"]').element as HTMLInputElement;
+
+    // First error
+    const txtFile = new File(['text'], 'test1.txt', { type: 'text/plain' });
+    setInputFiles(input, [txtFile]);
+    input.dispatchEvent(new Event('change'));
+    await nextTick();
+
+    expect(wrapper.text()).toContain('サポートされていないファイル形式');
+
+    // Second error before timer expires
+    const docFile = new File(['doc'], 'test2.doc', { type: 'application/word' });
+    setInputFiles(input, [docFile]);
+    input.dispatchEvent(new Event('change'));
+    await nextTick();
+
+    expect(wrapper.text()).toContain('サポートされていないファイル形式');
+
+    // Run timer
+    vi.runAllTimers();
+    await nextTick();
+
+    // Error should be cleared
+    expect(wrapper.text()).not.toContain('サポートされていないファイル形式');
+  });
 });
