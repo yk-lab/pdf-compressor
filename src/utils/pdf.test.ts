@@ -20,11 +20,9 @@ import {
   isPdf,
   isImage,
   loadImageToCanvas,
-} from './pdf';
+} from '@/utils/pdf';
 import { PDFDocument, StandardFonts, rgb, PDFPage } from 'pdf-lib';
-
-// Type for blob callback
-type BlobCallback = (blob: Blob | null) => void;
+import type { BlobCallback } from '@/utils/types';
 
 // Mock setup helpers
 interface MockImageSetup {
@@ -567,6 +565,13 @@ describe('PDF Utilities', () => {
 
       // Mock canvas with toBlob support
       const originalCreateElement = document.createElement.bind(document);
+      const mockToBlob = vi.fn((callback: BlobCallback, _type?: string, quality?: number) => {
+        // Simulate large image that needs compression
+        const blob =
+          quality === 1.0 ? createMockJpegBlob(2_000_000) : createMockJpegBlob(500_000, true);
+        setTimeout(() => callback(blob), 0);
+      });
+
       vi.spyOn(document, 'createElement').mockImplementation((tag: any) => {
         if (tag === 'canvas') {
           const mockCanvas = {
@@ -577,16 +582,7 @@ describe('PDF Utilities', () => {
               fillRect: vi.fn(),
               drawImage: vi.fn(),
             })),
-            toBlob: vi.fn((callback: BlobCallback, _type?: string, quality?: number) => {
-              // Simulate large image that needs compression
-              const blob =
-                quality === 1.0 ? createMockJpegBlob(2_000_000) : createMockJpegBlob(500_000, true);
-              Object.defineProperty(blob, 'size', {
-                value: quality === 1.0 ? 2_000_000 : 500_000,
-                writable: false,
-              });
-              setTimeout(() => callback(blob), 0);
-            }),
+            toBlob: mockToBlob,
           };
           return mockCanvas as unknown as HTMLCanvasElement;
         }
@@ -602,6 +598,11 @@ describe('PDF Utilities', () => {
       try {
         const mergedPdf = await mergePdfFiles([jpegFile]);
         expect(mergedPdf.numPages).toBe(1);
+
+        // Verify toBlob was called twice with correct quality values
+        expect(mockToBlob).toHaveBeenCalledTimes(2);
+        expect(mockToBlob).toHaveBeenNthCalledWith(1, expect.any(Function), 'image/jpeg', 1.0);
+        expect(mockToBlob).toHaveBeenNthCalledWith(2, expect.any(Function), 'image/jpeg', 0.9);
       } finally {
         // Cleanup
         global.Image = originalImage;
