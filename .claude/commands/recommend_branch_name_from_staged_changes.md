@@ -1,4 +1,5 @@
 ---
+allowed-tools: Bash(git diff:*), Bash(git show:*), Bash(git branch:*), Bash(git status:*), Bash(git check-ref-format:*), Bash(git rev-parse:*)
 description: Suggest appropriate branch names based on staged changes
 ---
 
@@ -26,9 +27,9 @@ Current branch: !`git branch --show-current`
 Short status: !`git status -sb`
 Name status (added/modified/renamed): !`git diff --cached --name-status`
 Summary with renames/copies: !`git diff --cached --summary`
-Show a staged file's content: !`git show :<path>`
-Validate a candidate name: !`git check-ref-format --branch "<candidate>"`
-Check if branch already exists: !`git rev-parse --verify --quiet refs/heads/<candidate> || echo "available"`
+Show a staged file's content: `git show :<path>`
+Validate a candidate name: `git check-ref-format --branch "<candidate>"`
+Check if branch already exists: `git rev-parse --verify --quiet refs/heads/<candidate> || echo "available"`
 
 ## Branch Naming Rules
 
