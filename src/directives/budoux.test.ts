@@ -55,8 +55,9 @@ describe('budoux directive', () => {
     // Mock CSS.supports
     originalCSS = global.CSS;
     global.CSS = {
-      supports: vi.fn((prop: string) => {
-        return prop === 'text-wrap: balance' || prop === 'word-break: auto-phrase';
+      supports: vi.fn((prop: string, value?: string) => {
+        const query = value ? `${prop}: ${value}` : prop;
+        return query === 'text-wrap: balance' || query === 'word-break: auto-phrase';
       }),
     } as unknown as typeof CSS;
   });
