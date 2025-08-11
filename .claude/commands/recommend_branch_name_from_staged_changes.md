@@ -11,9 +11,11 @@ This command analyzes staged changes and suggests appropriate branch names follo
 - Analyze the staged changes to understand the scope and type of changes
 - Identify the primary purpose (feature, fix, refactor, docs, test, etc.)
 - Include the scope/component in branch names (e.g., `feat/uploader-image-support`)
-- Prefix with issue/ticket numbers if available (e.g., `feat/64-image-file-support`, `fix/issue-123-null-pointer`)
+- Prefix with issue/ticket numbers if available (e.g., `feat/gh-64-image-file-support`, `fix/gh-123-null-pointer`)
 - Suggest 3-5 branch name options following the detailed naming rules below
 - Provide reasoning for each suggestion including why the scope was chosen
+- Validate each suggested name with `git check-ref-format --branch "<candidate>"`
+- When changes touch multiple scopes, choose the dominant scope (lines changed, user impact, release note visibility) and reflect only one scope in the name
 
 ## Commands
 
@@ -22,6 +24,11 @@ Detailed staged diff: !`git diff --cached`
 List staged files: !`git diff --cached --name-only`
 Current branch: !`git branch --show-current`
 Short status: !`git status -sb`
+Name status (added/modified/renamed): !`git diff --cached --name-status`
+Summary with renames/copies: !`git diff --cached --summary`
+Show a staged file's content: !`git show :<path>`
+Validate a candidate name: !`git check-ref-format --branch "<candidate>"`
+Check if branch already exists: !`git rev-parse --verify --quiet refs/heads/<candidate> || echo "available"`
 
 ## Branch Naming Rules
 
@@ -32,6 +39,13 @@ Short status: !`git status -sb`
 - **Hyphens as separators**: Use hyphens (-) to separate words
 - **Maximum 60 characters**: Keep branch names concise and under 60 characters
 - **Include scope**: Add the component/module scope after the type prefix
+- **Slugifying**:
+  1. Lowercase
+  2. Replace non-ASCII and separators with hyphen
+  3. Collapse repeated hyphens
+  4. Trim leading/trailing hyphens
+- **Reference regex (example)**:
+  `^(feat|fix|refactor|docs|test|chore|perf|build|ci|style|revert|wip)/[a-z0-9]+(?:-[a-z0-9]+){0,}$`
 
 ### Git Restrictions
 
@@ -41,7 +55,7 @@ Short status: !`git status -sb`
 - **No leading/trailing slashes**: Cannot start or end with `/`
 - **No dots at start**: Cannot begin with `.`
 - **No ending with .lock**: Cannot end with `.lock`
-- **No path components `.` or `..`**: Cannot contain `/.` or `/..` segments
+- **No path components `.` or `..`**: Cannot contain `/.` or `/..` segments, and `..` must not appear anywhere in the name
 - **No `@{` sequence**: Disallowed in ref-names (e.g., `feat/foo@{bar}`)
 - **No trailing dot**: Cannot end with `.`
 
@@ -59,14 +73,16 @@ Short status: !`git status -sb`
 - **style/**: Formatting, missing semicolons, etc.; no code change
 - **revert/**: Reverts a previous commit
 - **wip/**: Work in progress (short-lived, squash before merge)
+- **ops/**: Operational tasks, runbooks, infra without build changes
+- **sec/**: Security fixes or hardening (alternatively use fix/ with a "security" scope)
 
 ## Examples
 
 ### With Issue Numbers
 
-- `feat/64-image-file-support`
-- `fix/issue-123-null-pointer-exception`
-- `refactor/78-extract-pdf-utilities`
+- `feat/gh-64-image-file-support`
+- `fix/gh-123-null-pointer-exception`
+- `refactor/gh-78-extract-pdf-utilities`
 - `docs/gh-102-api-documentation`
 
 ### With Scope (No Issue Number)
