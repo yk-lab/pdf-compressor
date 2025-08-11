@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Mock PDF.js worker setup to stabilize tests
@@ -453,7 +453,7 @@ describe('PDF Utilities', () => {
 
       const smallBlob = new Blob([validJpegData], { type: 'image/jpeg' });
       smallBlob.arrayBuffer = vi.fn().mockResolvedValue(validJpegData.buffer);
-      
+
       const mockCanvas = {
         toBlob: vi.fn((callback: BlobCallback, _type?: string, _quality?: number) => {
           setTimeout(() => callback(smallBlob), 0);
@@ -527,7 +527,7 @@ describe('PDF Utilities', () => {
 
       // Setup onload/onerror property setters
       Object.defineProperty(imgElement, 'onload', {
-        set: function(handler: () => void) {
+        set: function (handler: () => void) {
           setTimeout(() => handler(), 0);
         },
         configurable: true,
@@ -552,10 +552,12 @@ describe('PDF Utilities', () => {
               const size = quality === 1.0 ? 2_000_000 : 500_000; // First call returns > 1MB
               const largeData = new Uint8Array(size).fill(0xff);
               // Use valid JPEG data for actual embedding
-              const blob = new Blob([quality === 1.0 ? largeData : validJpegData], { type: 'image/jpeg' });
-              blob.arrayBuffer = vi.fn().mockResolvedValue(
-                quality === 1.0 ? largeData.buffer : validJpegData.buffer
-              );
+              const blob = new Blob([quality === 1.0 ? largeData : validJpegData], {
+                type: 'image/jpeg',
+              });
+              blob.arrayBuffer = vi
+                .fn()
+                .mockResolvedValue(quality === 1.0 ? largeData.buffer : validJpegData.buffer);
               Object.defineProperty(blob, 'size', { value: size, writable: false });
               setTimeout(() => callback(blob), 0);
             }),
