@@ -101,7 +101,7 @@ describe('budoux directive', () => {
       const el = document.createElement('div');
       el.textContent = 'エラーテスト';
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockLoadDefaultJapaneseParser.mockRejectedValue(new Error('Parser load failed'));
 
       await budouxDirective.mounted(el);
@@ -168,7 +168,7 @@ describe('budoux directive', () => {
       const el1 = document.createElement('div');
       el1.textContent = '最初のテキスト';
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       // First call fails
       mockLoadDefaultJapaneseParser.mockRejectedValueOnce(new Error('First load failed'));
@@ -234,7 +234,7 @@ describe('budoux directive', () => {
         throw new Error('Translation failed');
       });
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       await budouxDirective.mounted(el);
 

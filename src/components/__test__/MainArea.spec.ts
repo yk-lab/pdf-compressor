@@ -79,13 +79,15 @@ describe('MainArea.vue - addFiles', () => {
       new File([''], 'test2.pdf', { type: 'application/pdf' }),
       new File([''], 'test.jpg', { type: 'image/jpeg' }),
       new File([''], 'test.png', { type: 'image/png' }),
+      new File([''], 'test.webp', { type: 'image/webp' }),
+      new File([''], 'test.gif', { type: 'image/gif' }),
     ];
 
-    await wrapper.vm.addFiles(files);
+    wrapper.vm.addFiles(files);
 
     const pdfFiles = wrapper.vm.pdfFiles;
-    expect(pdfFiles).toHaveLength(4);
-    expect(crypto.randomUUID).toHaveBeenCalledTimes(4);
+    expect(pdfFiles).toHaveLength(6);
+    expect(crypto.randomUUID).toHaveBeenCalledTimes(6);
 
     expect(pdfFiles[0]).toEqual({
       id: expect.any(String),
@@ -114,6 +116,14 @@ describe('MainArea.vue - addFiles', () => {
         name: 'test.png',
         type: 'image/png',
       }),
+    });
+    expect(pdfFiles[4]).toEqual({
+      id: expect.any(String),
+      file: expect.objectContaining({ name: 'test.webp', type: 'image/webp' }),
+    });
+    expect(pdfFiles[5]).toEqual({
+      id: expect.any(String),
+      file: expect.objectContaining({ name: 'test.gif', type: 'image/gif' }),
     });
   });
 
