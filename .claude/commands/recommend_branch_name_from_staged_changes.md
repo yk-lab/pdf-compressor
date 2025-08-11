@@ -17,6 +17,9 @@ This command analyzes staged changes and suggests appropriate branch names follo
 
 ## Commands
 
+View staged changes: !`git diff --cached --stat`
+Detailed staged diff: !`git diff --cached`
+List staged files: !`git diff --cached --name-only`
 Current branch: !`git branch --show-current`
 Short status: !`git status -sb`
 
@@ -25,7 +28,7 @@ Short status: !`git status -sb`
 ### Format Requirements
 
 - **Lowercase kebab-case only**: Use only lowercase letters, numbers, and hyphens
-- **ASCII characters only**: No special characters, emojis, or non-ASCII letters
+- **Printable ASCII only (0x20–0x7E)**: No control characters, emojis, or non-ASCII letters
 - **Hyphens as separators**: Use hyphens (-) to separate words
 - **Maximum 60 characters**: Keep branch names concise and under 60 characters
 - **Include scope**: Add the component/module scope after the type prefix
@@ -38,6 +41,9 @@ Short status: !`git status -sb`
 - **No leading/trailing slashes**: Cannot start or end with `/`
 - **No dots at start**: Cannot begin with `.`
 - **No ending with .lock**: Cannot end with `.lock`
+- **No path components `.` or `..`**: Cannot contain `/.` or `/..` segments
+- **No `@{` sequence**: Disallowed in ref-names (e.g., `feat/foo@{bar}`)
+- **No trailing dot**: Cannot end with `.`
 
 ### Type Prefixes
 
