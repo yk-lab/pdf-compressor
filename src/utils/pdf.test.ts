@@ -519,6 +519,13 @@ describe('PDF Utilities', () => {
       let callCount = 0;
 
       // Mock the toBlob method on HTMLCanvasElement prototype
+      if (!('toBlob' in HTMLCanvasElement.prototype)) {
+        Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+          configurable: true,
+          writable: true,
+          value: function () {},
+        });
+      }
       const toBlobMock = vi
         .spyOn(HTMLCanvasElement.prototype, 'toBlob')
         .mockImplementation(function (
@@ -533,7 +540,6 @@ describe('PDF Utilities', () => {
           const blob = createMockJpegBlob(size);
           setTimeout(() => callback(blob), 0);
         });
-
       // Create a mock canvas
       const mockCanvas = {
         width: 1000,
