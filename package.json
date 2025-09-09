@@ -37,7 +37,7 @@
     "@vue/test-utils": "^2.4.6",
     "@vue/tsconfig": "^0.7.0",
     "@vueuse/core": "13.5.0",
-    "@vueuse/integrations": "12.7.0",
+    "@vueuse/integrations": "13.9.0",
     "autoprefixer": "10.4.20",
     "budoux": "0.7.0",
     "cspell": "9.0.2",
