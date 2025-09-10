@@ -61,7 +61,7 @@
     "sortablejs": "1.15.6",
     "tailwindcss": "3.4.17",
     "typescript": "~5.7.3",
-    "vite": "^6.3.5",
+    "vite": "^6.3.6",
     "vite-plugin-static-copy": "2.2.0",
     "vite-plugin-vue-devtools": "^7.7.7",
     "vitest": "^3.2.4",
