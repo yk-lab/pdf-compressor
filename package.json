@@ -43,7 +43,7 @@
     "cspell": "9.0.2",
     "dompurify": "3.2.6",
     "eslint": "^9.32.0",
-    "eslint-plugin-oxlint": "^0.15.15",
+    "eslint-plugin-oxlint": "^1.15.0",
     "eslint-plugin-playwright": "^2.2.0",
     "eslint-plugin-vue": "^9.33.0",
     "filesize.js": "2.0.0",
